@@ -44,6 +44,7 @@ const ENV_ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .map(normalizeOrigin)
     .filter(Boolean);
 const IS_PROD = (process.env.NODE_ENV || 'development') === 'production';
+const IS_DEV = !IS_PROD;
 const ALLOWED_ORIGINS = Array.from(new Set(
     ENV_ALLOWED_ORIGINS.length
         ? (IS_PROD ? ENV_ALLOWED_ORIGINS : [...ENV_ALLOWED_ORIGINS, ...DEFAULT_ALLOWED_ORIGINS])
@@ -53,7 +54,7 @@ const ALLOWED_ORIGINS = Array.from(new Set(
 const io = new Server(server, {
     cors: {
         origin: function (origin, callback) {
-            const isDev = (process.env.NODE_ENV || 'development') !== 'production';
+            const isDev = IS_DEV;
             const devPattern = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):[0-9]{2,5}$/;
             const o = normalizeOrigin(origin);
             if (!origin || ALLOWED_ORIGINS.includes(o) || (isDev && devPattern.test(o))) {
@@ -87,14 +88,14 @@ app.use(helmet({
 app.use(cors({
     origin: function (origin, callback) {
         const allowedOrigins = ALLOWED_ORIGINS;
-        const isDev = (process.env.NODE_ENV || 'development') !== 'production';
+        const isDev = IS_DEV;
         const devPattern = /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):[0-9]{2,5}$/;
 
         const o = normalizeOrigin(origin);
         if (!origin || allowedOrigins.includes(o) || (isDev && devPattern.test(o))) {
             callback(null, true);
         } else {
-            console.log('🚫 CORS blocked origin:', origin);
+            if (isDev) console.log('🚫 CORS blocked origin:', origin);
             callback(new Error('Non permesso da CORS'));
         }
     },
@@ -135,18 +136,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-// Middleware per logging delle richieste
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-});
+if (IS_DEV) {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+        next();
+    });
+}
 
 // Configurazione Socket.IO
 io.on('connection', (socket) => {
-    console.log('🔌 Client connesso:', socket.id);
-    
+    if (IS_DEV) console.log('🔌 Client connesso:', socket.id);
     socket.on('disconnect', () => {
-        console.log('🔌 Client disconnesso:', socket.id);
+        if (IS_DEV) console.log('🔌 Client disconnesso:', socket.id);
     });
 });
 
@@ -273,11 +274,13 @@ async function startServer() {
 
         // Avvia il server HTTP con Socket.IO
         server.listen(PORT, () => {
-            console.log(`🚀 Server avviato su porta ${PORT}`);
-            console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-            console.log(`📡 API disponibili su: http://localhost:${PORT}/api`);
-            console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
-            console.log(`🔌 Socket.IO attivo per aggiornamenti in tempo reale`);
+            if (IS_DEV) {
+                console.log(`🚀 Server avviato su porta ${PORT}`);
+                console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+                console.log(`📡 API disponibili su: http://localhost:${PORT}/api`);
+                console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+                console.log(`🔌 Socket.IO attivo per aggiornamenti in tempo reale`);
+            }
         });
 
     } catch (error) {
@@ -288,13 +291,13 @@ async function startServer() {
 
 // Gestione graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\n🛑 Ricevuto SIGINT, chiusura server...');
+    if (IS_DEV) console.log('\n🛑 Ricevuto SIGINT, chiusura server...');
     await database.close();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-    console.log('\n🛑 Ricevuto SIGTERM, chiusura server...');
+    if (IS_DEV) console.log('\n🛑 Ricevuto SIGTERM, chiusura server...');
     await database.close();
     process.exit(0);
 });

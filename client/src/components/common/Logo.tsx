@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import logoSvg from '../../assets/logos/logo.svg';
 
 interface LogoProps {
   size?: number;
@@ -14,10 +13,11 @@ const LogoImage = styled.img<{ size: number }>`
 `;
 
 const Logo: React.FC<LogoProps> = ({ size = 40, className }) => {
+  const logoSrc = ((process.env.PUBLIC_URL as string) || '') + '/logo.svg';
   return (
-    <LogoImage 
-      src={logoSvg} 
-      alt="Menu Manager Logo" 
+    <LogoImage
+      src={logoSrc}
+      alt="Menu Manager Logo"
       size={size}
       className={className}
     />

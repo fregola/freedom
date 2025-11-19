@@ -160,7 +160,7 @@ const LoginForm: React.FC = () => {
     <LoginContainer>
       <LoginCard>
         <LogoContainer>
-          <Logo size={80} />
+          <Logo size={220} />
         </LogoContainer>
         
         <Title>Accedi</Title>
