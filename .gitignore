@@ -1,0 +1,36 @@
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Locks
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+
+# Build artifacts
+client/build/
+client/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+client/.env
+server/.env
+!server/.env.production
+
+# Database files
+server/database/*.db
+server/database/*.sqlite
+
+# Uploads (binaries)
+server/uploads/
+
+# Misc
+.DS_Store
+coverage/
