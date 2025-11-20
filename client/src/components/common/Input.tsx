@@ -14,6 +14,9 @@ interface InputProps {
   required?: boolean;
   id?: string;
   name?: string;
+  step?: number;
+  min?: number;
+  max?: number;
 }
 
 const InputContainer = styled.div.withConfig({

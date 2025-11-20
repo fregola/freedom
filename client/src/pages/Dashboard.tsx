@@ -218,6 +218,12 @@ const Dashboard: React.FC = () => {
       path: '/products',
     },
     {
+      icon: '🪑',
+      title: 'Gestisci Sala',
+      description: 'Stato tavoli, camerieri, note',
+      path: '/hall',
+    },
+    {
       icon: '🏢',
       title: 'Attività',
       description: 'Gestisci le informazioni della tua attività',

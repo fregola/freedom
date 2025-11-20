@@ -144,6 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         { path: '/ingredients', label: 'Ingredienti', icon: '🥕' },
         { path: '/categories', label: 'Categorie', icon: '📂' },
         { path: '/products', label: 'Prodotti', icon: '🍽️' },
+        { path: '/hall', label: 'Sale', icon: '🪑' },
         { path: '/custom-menus', label: 'Menu personalizzati', icon: '🧾' },
       ],
     },

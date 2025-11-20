@@ -14,6 +14,7 @@ import Categories from './pages/Categories';
 import Products from './pages/Products';
 import BusinessInfo from './pages/BusinessInfo';
 import CustomMenus from './pages/CustomMenus';
+import Hall from './pages/Hall';
 
 const App: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           {/* Public routes */}
+        <Route path="/" element={<Navigate to="/menu" replace />} />
         <Route path="/menu" element={<PublicMenu />} />
         <Route path="/menu/custom" element={<PublicCustomMenu />} />
           <Route path="/menu/category/:categoryId" element={<CategoryProducts />} />
@@ -38,6 +40,7 @@ const App: React.FC = () => {
                     <Route path="/ingredients" element={<Ingredients />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/products" element={<Products />} />
+                    <Route path="/hall" element={<Hall />} />
                     <Route path="/custom-menus" element={<CustomMenus />} />
                     <Route path="/business" element={<BusinessInfo />} />
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
