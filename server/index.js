@@ -164,6 +164,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/custom-menus', require('./routes/customMenus'));
 app.use('/api/business', require('./routes/business'));
 app.use('/api/translate', require('./routes/translate'));
+app.use('/api/rooms', require('./routes/rooms'));
 
 // Route per informazioni API
 app.get('/api', (req, res) => {
@@ -271,6 +272,30 @@ async function startServer() {
         } catch (e) {
             console.warn('Impossibile forzare is_active=1 per admin:', e?.message);
         }
+
+        await database.run(`CREATE TABLE IF NOT EXISTS rooms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(120) NOT NULL,
+            width INTEGER NOT NULL,
+            height INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+        await database.run(`CREATE TABLE IF NOT EXISTS room_tables (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room_id INTEGER NOT NULL,
+            type VARCHAR(20) NOT NULL,
+            x INTEGER NOT NULL,
+            y INTEGER NOT NULL,
+            w INTEGER NOT NULL,
+            h INTEGER NOT NULL,
+            capacity INTEGER NOT NULL,
+            status VARCHAR(20) NOT NULL,
+            label VARCHAR(120),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+        )`);
+        await database.run(`CREATE INDEX IF NOT EXISTS idx_room_tables_room ON room_tables(room_id)`);
 
         // Avvia il server HTTP con Socket.IO
         server.listen(PORT, () => {

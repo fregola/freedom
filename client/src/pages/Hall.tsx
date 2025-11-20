@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import { roomService } from '../services/api';
 
 type TableStatus = 'libero' | 'occupato' | 'in_attesa' | 'conto';
 type TableType = 'rect' | 'round';
@@ -261,49 +262,70 @@ const Hall: React.FC = () => {
   };
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed: Room[] = JSON.parse(raw);
-        setRooms(parsed);
-        setCurrentRoomId(parsed[0]?.id ?? null);
-      } else {
-        const initial: Room = {
-          id: 1,
-          name: 'Sala 1',
-          width: 1000,
-          height: 600,
-          tables: [],
-        };
-        setRooms([initial]);
-        setCurrentRoomId(1);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([initial]));
-      }
-    } catch {}
+    (async () => {
+      try {
+        const res = await roomService.getAll();
+        const list = res?.data?.rooms || [];
+        if (Array.isArray(list) && list.length > 0) {
+          setRooms(list);
+          setCurrentRoomId(list[0]?.id ?? null);
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch {}
+          return;
+        }
+      } catch {}
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed: Room[] = JSON.parse(raw);
+          setRooms(parsed);
+          setCurrentRoomId(parsed[0]?.id ?? null);
+          return;
+        }
+      } catch {}
+      const initial: Room = { id: 1, name: 'Sala 1', width: 1000, height: 600, tables: [] };
+      setRooms([initial]);
+      setCurrentRoomId(1);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify([initial])); } catch {}
+      try { await roomService.create({ name: initial.name, width: initial.width, height: initial.height }); } catch {}
+    })();
   }, []);
 
   const currentRoom = useMemo(() => rooms.find(r => r.id === currentRoomId) || null, [rooms, currentRoomId]);
 
-  const saveRooms = (next: Room[]) => {
+  const saveRooms = async (next: Room[], updatedRoomId?: number) => {
     setRooms(next);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+    if (updatedRoomId) {
+      try {
+        const target = next.find(r => r.id === updatedRoomId);
+        if (target) {
+          await roomService.setTables(target.id, target.tables);
+        }
+      } catch {}
+    }
   };
 
-  const addRoom = () => {
+  const addRoom = async () => {
     const maxId = rooms.reduce((m, r) => Math.max(m, r.id), 0);
     const name = (newRoomName || `Sala ${maxId + 1}`).trim();
-    const r: Room = { id: maxId + 1, name, width: 1000, height: 600, tables: [] };
+    let newId = maxId + 1;
+    try {
+      const created = await roomService.create({ name, width: 1000, height: 600 });
+      newId = Number(created?.data?.room?.id || newId);
+    } catch {}
+    const r: Room = { id: newId, name, width: 1000, height: 600, tables: [] };
     const next = [...rooms, r];
-    saveRooms(next);
+    await saveRooms(next, r.id);
     setCurrentRoomId(r.id);
     setNewRoomName('');
     setMode('edit');
   };
 
-  const renameRoom = (name: string) => {
+  const renameRoom = async (name: string) => {
     if (!currentRoom) return;
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, name } : r);
-    saveRooms(next);
+    await saveRooms(next);
+    try { await roomService.update(currentRoom.id, { name }); } catch {}
   };
 
   const deleteRoom = () => {
@@ -314,10 +336,11 @@ const Hall: React.FC = () => {
       saveRooms(next);
       setCurrentRoomId(next[0]?.id ?? null);
       setSelectedId(null);
+      roomService.delete(currentRoom.id).catch(() => {});
     });
   };
 
-  const addTableAt = (x: number, y: number, type: TableType) => {
+  const addTableAt = async (x: number, y: number, type: TableType) => {
     if (!currentRoom) return;
     const maxId = currentRoom.tables.reduce((m, t) => Math.max(m, t.id), 0);
     const table: TableItem = {
@@ -332,29 +355,29 @@ const Hall: React.FC = () => {
       label: `Tavolo ${maxId + 1}`,
     };
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, tables: [...r.tables, table] } : r);
-    saveRooms(next);
+    await saveRooms(next, currentRoom.id);
     setSelectedId(table.id);
   };
 
-  const setTable = (id: number, patch: Partial<TableItem>) => {
+  const setTable = async (id: number, patch: Partial<TableItem>) => {
     if (!currentRoom) return;
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, tables: r.tables.map(t => t.id === id ? { ...t, ...patch } : t) } : r);
-    saveRooms(next);
+    await saveRooms(next, currentRoom.id);
   };
 
-  const renumberCurrentRoom = () => {
+  const renumberCurrentRoom = async () => {
     if (!currentRoom) return;
     const sorted = [...currentRoom.tables].sort((a, b) => a.id - b.id);
     const remapped = sorted.map((t, i) => ({ ...t, id: i + 1, label: `Tavolo ${i + 1}` }));
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, tables: remapped } : r);
-    saveRooms(next);
+    await saveRooms(next, currentRoom.id);
   };
 
-  const removeTable = (id: number) => {
+  const removeTable = async (id: number) => {
     if (!currentRoom) return;
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, tables: r.tables.filter(t => t.id !== id) } : r);
-    saveRooms(next);
-    renumberCurrentRoom();
+    await saveRooms(next, currentRoom.id);
+    await renumberCurrentRoom();
     if (selectedId === id) setSelectedId(null);
   };
 
@@ -420,7 +443,7 @@ const Hall: React.FC = () => {
   };
 
 
-  const mergeOverlapsIfAny = () => {
+  const mergeOverlapsIfAny = async () => {
     if (!currentRoom || lastDraggedId == null) return;
     const dragged = currentRoom.tables.find(t => t.id === lastDraggedId);
     if (!dragged) return;
@@ -449,7 +472,7 @@ const Hall: React.FC = () => {
     const removeIds = new Set(group.map(t => t.id));
     const keep = currentRoom.tables.filter(t => !removeIds.has(t.id));
     const next = rooms.map(r => r.id === currentRoom.id ? { ...r, tables: [...keep, merged] } : r);
-    saveRooms(next);
+    await saveRooms(next, currentRoom.id);
     setSelectedId(merged.id);
   };
 
