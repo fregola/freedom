@@ -121,7 +121,8 @@ router.put('/', (req, res) => {
     facebook,
     google_business,
     whatsapp,
-    logo_path
+    logo_path,
+    qr_destination
   } = req.body;
 
   if (!name) {
@@ -134,16 +135,16 @@ router.put('/', (req, res) => {
     INSERT OR REPLACE INTO business_info (
       id, name, description, address, city, postal_code, 
       phone, email, vat_number, website, instagram, 
-      facebook, google_business, whatsapp, logo_path, updated_at
+      facebook, google_business, whatsapp, logo_path, qr_destination, updated_at
     ) VALUES (
-      1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+      1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
     )
   `;
   
   db.run(query, [
     name, description, address, city, postal_code,
     phone, email, vat_number, website, instagram,
-    facebook, google_business, whatsapp, logo_path
+    facebook, google_business, whatsapp, logo_path, qr_destination
   ], function(err) {
     if (err) {
       console.error('Errore nell\'aggiornamento dei dati dell\'attività:', err);
@@ -159,10 +160,28 @@ router.put('/', (req, res) => {
   db.close();
 });
 
-// GET /api/business/qrcode - Genera QR code del menu pubblico (solo admin)
-router.get('/qrcode', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    // Determina l'URL del menu pubblico
+// GET /api/business/qr-redirect - Reindirizza all'URL configurato o al menu
+router.get('/qr-redirect', (req, res) => {
+  const db = new sqlite3.Database(dbPath);
+  
+  db.get('SELECT qr_destination FROM business_info WHERE id = 1', (err, row) => {
+    db.close();
+
+    if (err) {
+      console.error('Errore recupero qr_destination:', err);
+      return res.status(500).send('Errore del server');
+    }
+
+    // Se esiste una destinazione personalizzata, usa quella
+    if (row && row.qr_destination && row.qr_destination.trim()) {
+      let dest = row.qr_destination.trim();
+      if (!dest.startsWith('http://') && !dest.startsWith('https://')) {
+        dest = 'https://' + dest;
+      }
+      return res.redirect(dest);
+    }
+
+    // Altrimenti fallback al comportamento standard (menu pubblico)
     const envUrl = (process.env.PUBLIC_MENU_URL || '')
       .trim()
       .replace(/^`+|`+$/g, '')
@@ -172,7 +191,6 @@ router.get('/qrcode', authenticateToken, requireAdmin, async (req, res) => {
 
     let menuUrl = envUrl || '';
     if (!menuUrl) {
-      // Fallback: prova prima con Origin, poi con Host, infine localhost
       const origin = (req.headers.origin || '')
         .trim()
         .replace(/^`+|`+$/g, '')
@@ -189,9 +207,21 @@ router.get('/qrcode', authenticateToken, requireAdmin, async (req, res) => {
         menuUrl = 'http://localhost:3000/menu';
       }
     }
+    
+    return res.redirect(menuUrl);
+  });
+});
+
+// GET /api/business/qrcode - Genera QR code del menu pubblico (solo admin)
+router.get('/qrcode', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    // Genera URL che punta all'endpoint di redirect
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.get('host');
+    const redirectUrl = `${protocol}://${host}/api/business/qr-redirect`;
 
     // Genera PNG del QR code
-    const buffer = await QRCode.toBuffer(menuUrl, {
+    const buffer = await QRCode.toBuffer(redirectUrl, {
       type: 'png',
       errorCorrectionLevel: 'M',
       width: 512,

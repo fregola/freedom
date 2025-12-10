@@ -319,4 +319,74 @@ export const roomService = {
   },
 };
 
+export const qrCodeService = {
+  getAll: async () => {
+    const response = await api.get('/qr-codes');
+    return response.data;
+  },
+  create: async (data: { name: string; destination_url: string }) => {
+    const response = await api.post('/qr-codes', data);
+    return response.data;
+  },
+  update: async (id: number, data: { name: string; destination_url: string }) => {
+    const response = await api.put(`/qr-codes/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/qr-codes/${id}`);
+    return response.data;
+  },
+  getImage: async (uuid: string): Promise<Blob> => {
+    const response = await api.get(`/qr-codes/${uuid}/image`, { responseType: 'blob' });
+    return response.data;
+  },
+};
+
+export const popupService = {
+  getAll: async () => {
+    const response = await api.get('/popups');
+    return response.data;
+  },
+  getActive: async () => {
+    const response = await api.get('/popups/active');
+    return response.data;
+  },
+  getById: async (id: number) => {
+    const response = await api.get(`/popups/${id}`);
+    return response.data;
+  },
+  create: async (data: any) => {
+    const response = await api.post('/popups', data);
+    return response.data;
+  },
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/popups/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    const response = await api.delete(`/popups/${id}`);
+    return response.data;
+  },
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await api.post('/popups/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  uploadVideo: async (file: File) => {
+    const formData = new FormData();
+    formData.append('video', file);
+    const response = await api.post('/popups/upload-video', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+};
+
 export default api;

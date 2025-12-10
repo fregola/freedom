@@ -57,7 +57,69 @@ const processImage = async (req, res, next) => {
   }
 };
 
+const processPopupImage = async (req, res, next) => {
+  if (!req.file) {
+    return next();
+  }
+
+  try {
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const filename = `popup_${timestamp}_${randomString}.webp`;
+    const filepath = path.join(__dirname, '../uploads/popups', filename);
+
+    await fs.mkdir(path.dirname(filepath), { recursive: true });
+
+    // For popups, we might want higher resolution or just different logic
+    // Keeping it simple but allowing slightly larger
+    await sharp(req.file.buffer)
+      .resize(1200, 1200, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({ quality: 85 })
+      .toFile(filepath);
+
+    req.imagePath = `/uploads/popups/${filename}`;
+    next();
+  } catch (error) {
+    console.error('Errore nel processamento dell\'immagine popup:', error);
+    res.status(500).json({ error: 'Errore nel processamento dell\'immagine popup' });
+  }
+};
+
 module.exports = {
   upload: upload.single('image'),
-  processImage
+  processImage,
+  processPopupImage,
+  uploadVideo: multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('video/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Solo file video sono permessi!'), false);
+      }
+    },
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+  }).single('video'),
+  processPopupVideo: async (req, res, next) => {
+    if (!req.file) return next();
+    try {
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const ext = path.extname(req.file.originalname) || '.mp4';
+      const filename = `popup_video_${timestamp}_${randomString}${ext}`;
+      const filepath = path.join(__dirname, '../uploads/popups', filename);
+
+      await fs.mkdir(path.dirname(filepath), { recursive: true });
+      await fs.writeFile(filepath, req.file.buffer);
+
+      req.videoPath = `/uploads/popups/${filename}`;
+      next();
+    } catch (error) {
+      console.error('Errore nel processamento del video popup:', error);
+      res.status(500).json({ error: 'Errore nel processamento del video popup' });
+    }
+  }
 };

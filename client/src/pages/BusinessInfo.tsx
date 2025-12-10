@@ -203,6 +203,7 @@ interface BusinessData {
   facebook: string;
   google_business: string;
   whatsapp: string;
+  qr_destination?: string;
   logo_path?: string;
 }
 
@@ -222,6 +223,7 @@ const BusinessInfo: React.FC = () => {
     facebook: '',
     google_business: '',
     whatsapp: '',
+    qr_destination: '',
     logo_path: '',
   });
 
@@ -255,6 +257,7 @@ const BusinessInfo: React.FC = () => {
         facebook: data.facebook || '',
         google_business: data.google_business || '',
         whatsapp: data.whatsapp || '',
+        qr_destination: data.qr_destination || '',
         logo_path: data.logo_path || '',
       });
     } catch (error) {
@@ -462,28 +465,6 @@ const BusinessInfo: React.FC = () => {
               </FormGroup>
             </FormRow>
           </Section>
-
-          {user?.role === 'admin' && (
-            <Section>
-              <SectionTitle>🔗 Distribuzione Menu via QR</SectionTitle>
-              <Subtitle style={{ marginBottom: 0 }}>URL pubblico del menu: <a href={shareMenuUrl} target="_blank" rel="noreferrer">{shareMenuUrl}</a></Subtitle>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <Button type="button" variant="primary" onClick={handleGenerateQr} disabled={qrLoading}>
-                  {qrLoading ? 'Generazione...' : 'Genera QR Code'}
-                </Button>
-                {qrPreviewUrl && (
-                  <a href={qrPreviewUrl} download="menu-qr.png" style={{ textDecoration: 'none' }}>
-                    <Button type="button" variant="secondary">Scarica PNG</Button>
-                  </a>
-                )}
-              </div>
-              {qrPreviewUrl && (
-                <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
-                  <img src={qrPreviewUrl} alt="QR Code del menu" style={{ width: 256, height: 256, border: '1px solid #e5e7eb', borderRadius: 8 }} />
-                </div>
-              )}
-            </Section>
-          )}
 
           <Section>
             <SectionTitle>📞 Contatti</SectionTitle>

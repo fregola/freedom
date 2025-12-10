@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { businessService, categoryService, customMenuService } from '../services/api';
+import { businessService, categoryService, customMenuService, popupService } from '../services/api';
 import { useProductEvents } from '../hooks/useSocket';
 import SharedFooter from '../components/SharedFooter';
+import PopupRenderer from '../components/PopupRenderer';
 import './PublicMenu.css';
 
 // URL base per le risorse statiche
@@ -44,6 +45,8 @@ const PublicMenu: React.FC = () => {
     (typeof window !== 'undefined' && localStorage.getItem('menu-language') === 'en') ? 'en' : 'it'
   );
   const [visibleCustom, setVisibleCustom] = useState<{ id: number; name: string } | null>(null);
+  const [activePopups, setActivePopups] = useState<any[]>([]);
+  const [currentPopup, setCurrentPopup] = useState<any>(null);
 
   // Funzione per ricaricare le categorie
   const reloadCategories = useCallback(async () => {
@@ -97,6 +100,16 @@ const PublicMenu: React.FC = () => {
         const businessResponse = await businessService.get();
         setBusinessInfo(businessResponse);
 
+        // Fetch popups
+        try {
+          const popupsResponse = await popupService.getActive();
+          if (popupsResponse.success) {
+            setActivePopups(popupsResponse.data.popups);
+          }
+        } catch (e) {
+          console.error('Error fetching popups:', e);
+        }
+
         // Fetch public categories (only parent categories with products)
         const categoriesResponse = await categoryService.getPublic();
         if (categoriesResponse.success) {
@@ -138,6 +151,51 @@ const PublicMenu: React.FC = () => {
     navigate(`/menu/category/${category.id}`);
   };
 
+  useEffect(() => {
+    if (activePopups.length > 0) {
+      // Logic to show popups
+      // Simple logic: show first onload popup
+      const onloadPopup = activePopups.find(p => p.trigger_type === 'onload');
+      if (onloadPopup) {
+        // Check frequency
+        if (onloadPopup.frequency === 'once_per_session') {
+          const seen = sessionStorage.getItem(`popup_seen_${onloadPopup.id}`);
+          if (!seen) {
+            setCurrentPopup(onloadPopup);
+            sessionStorage.setItem(`popup_seen_${onloadPopup.id}`, 'true');
+          }
+        } else {
+          setCurrentPopup(onloadPopup);
+        }
+      }
+
+      // Handle delay popups
+      const delayPopups = activePopups.filter(p => p.trigger_type === 'delay');
+      delayPopups.forEach(popup => {
+        setTimeout(() => {
+          if (popup.frequency === 'once_per_session') {
+            const seen = sessionStorage.getItem(`popup_seen_${popup.id}`);
+            if (!seen) {
+              setCurrentPopup(popup);
+              sessionStorage.setItem(`popup_seen_${popup.id}`, 'true');
+            }
+          } else {
+            setCurrentPopup(popup);
+          }
+        }, (popup.trigger_delay || 0) * 1000);
+      });
+    }
+  }, [activePopups]);
+
+  const closePopup = () => {
+    setCurrentPopup(null);
+  };
+
+  const renderPopup = () => {
+    if (!currentPopup) return null;
+    return <PopupRenderer popup={currentPopup} onClose={closePopup} />;
+  };
+
   if (loading) {
     return (
       <div className="public-menu-loading">
@@ -158,6 +216,7 @@ const PublicMenu: React.FC = () => {
 
   return (
     <div className="public-menu-container">
+      {renderPopup()}
       {loading && (
         <div className="loading-state">
           <p>Caricamento menu...</p>

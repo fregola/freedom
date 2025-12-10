@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
-
-interface LayoutProps {
-  children: React.ReactNode;
-}
 
 const LayoutContainer = styled.div`
   min-height: 100vh;
@@ -47,7 +44,7 @@ const MobileMenuButton = styled.button`
   }
 `;
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -67,7 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </MobileMenuButton>
         <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
         <ContentArea>
-          {children}
+          <Outlet />
         </ContentArea>
       </MainContainer>
     </LayoutContainer>

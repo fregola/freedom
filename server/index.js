@@ -165,6 +165,12 @@ app.use('/api/custom-menus', require('./routes/customMenus'));
 app.use('/api/business', require('./routes/business'));
 app.use('/api/translate', require('./routes/translate'));
 app.use('/api/rooms', require('./routes/rooms'));
+app.use('/api/qr-codes', require('./routes/qrCodes'));
+app.use('/api/popups', require('./routes/popups'));
+
+// Route pubblica per redirect QR code (definita qui per non richiedere auth)
+const { handleRedirect } = require('./controllers/qrCodeController');
+app.get('/api/qr-redirect/:uuid', handleRedirect);
 
 // Route per informazioni API
 app.get('/api', (req, res) => {

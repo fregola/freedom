@@ -140,18 +140,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     {
       section: 'Gestione Menu',
       items: [
-        { path: '/allergens', label: 'Allergeni', icon: '⚠️' },
-        { path: '/ingredients', label: 'Ingredienti', icon: '🥕' },
-        { path: '/categories', label: 'Categorie', icon: '📂' },
-        { path: '/products', label: 'Prodotti', icon: '🍽️' },
-        { path: '/hall', label: 'Sale', icon: '🪑' },
         { path: '/custom-menus', label: 'Menu personalizzati', icon: '🧾' },
+        { path: '/products', label: 'Prodotti', icon: '🍽️' },
+        { path: '/categories', label: 'Categorie', icon: '📂' },
+        { path: '/ingredients', label: 'Ingredienti', icon: '🥕' },
+        { path: '/allergens', label: 'Allergeni', icon: '⚠️' },
       ],
     },
     {
       section: 'Impostazioni',
       items: [
         { path: '/business', label: 'Attività', icon: '🏢' },
+        { 
+          path: '/qr-manager', 
+          label: 'Menu QR', 
+          icon: '🔗', 
+          hidden: user?.role !== 'admin'
+        },
+        { 
+          path: '/popups', 
+          label: 'Popups', 
+          icon: '💬', 
+          hidden: user?.role !== 'admin'
+        },
+        { path: '/hall', label: 'Sala', icon: '🪑' },
       ],
     },
   ];
@@ -170,25 +182,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <NavSection key={section.section}>
               <SectionTitle>{section.section}</SectionTitle>
               <NavList>
-                {section.items.map((item) => (
-                  <NavItem key={item.path}>
-                    <NavLink
-                      isActive={location.pathname === item.path}
-                      onClick={() => handleNavigation(item.path)}
-                    >
-                      <Icon>{item.icon}</Icon>
-                      {item.label}
-                    </NavLink>
-                  </NavItem>
-                ))}
-                {user?.role === 'admin' && section.section === 'Gestione Menu' && (
-                  <NavItem key="#qr-download">
-                    <NavLink isActive={false} onClick={handleDownloadQr}>
-                      <Icon>🔗</Icon>
-                      Menu QR
-                    </NavLink>
-                  </NavItem>
-                )}
+                {section.items.map((item: any) => {
+                  if (item.hidden) return null;
+                  
+                  return (
+                    <NavItem key={item.path}>
+                      <NavLink
+                        isActive={location.pathname === item.path}
+                        onClick={() => {
+                          if (item.onClick) {
+                            item.onClick();
+                          } else {
+                            handleNavigation(item.path);
+                          }
+                        }}
+                      >
+                        <Icon>{item.icon}</Icon>
+                        {item.label}
+                      </NavLink>
+                    </NavItem>
+                  );
+                })}
               </NavList>
             </NavSection>
           ))}

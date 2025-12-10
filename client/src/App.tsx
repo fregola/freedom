@@ -15,43 +15,41 @@ import Products from './pages/Products';
 import BusinessInfo from './pages/BusinessInfo';
 import CustomMenus from './pages/CustomMenus';
 import Hall from './pages/Hall';
+import QrCodeManager from './pages/QrCodeManager';
+import PopupManager from './pages/PopupManager';
+import PopupBuilder from './pages/PopupBuilder';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
-          {/* Public routes */}
-        <Route path="/" element={<Navigate to="/menu" replace />} />
-        <Route path="/menu" element={<PublicMenu />} />
-        <Route path="/menu/custom" element={<PublicCustomMenu />} />
-          <Route path="/menu/category/:categoryId" element={<CategoryProducts />} />
           <Route path="/login" element={<LoginForm />} />
           
-          {/* Protected routes */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/allergens" element={<Allergens />} />
-                    <Route path="/ingredients" element={<Ingredients />} />
-                    <Route path="/categories" element={<Categories />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/hall" element={<Hall />} />
-                    <Route path="/custom-menus" element={<CustomMenus />} />
-                    <Route path="/business" element={<BusinessInfo />} />
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          {/* Rotte pubbliche per il menu */}
+          <Route path="/menu" element={<PublicMenu />} />
+          <Route path="/menu/custom/:id" element={<PublicCustomMenu />} />
+          
+          {/* Rotte protette della dashboard */}
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="allergens" element={<Allergens />} />
+            <Route path="ingredients" element={<Ingredients />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="categories/:id/products" element={<CategoryProducts />} />
+            <Route path="products" element={<Products />} />
+            <Route path="business" element={<BusinessInfo />} />
+            <Route path="custom-menus" element={<CustomMenus />} />
+            <Route path="hall" element={<Hall />} />
+            <Route path="qr-manager" element={<QrCodeManager />} />
+            <Route path="popups" element={<PopupManager />} />
+            <Route path="popups/new" element={<PopupBuilder />} />
+            <Route path="popups/:id" element={<PopupBuilder />} />
+          </Route>
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 
