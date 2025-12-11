@@ -412,7 +412,11 @@ const PopupBuilder: React.FC = () => {
     try {
       setLoading(true);
       const data = await popupService.getById(popupId);
-      const popup = data.popup;
+      const popup = data.data?.popup || data.popup;
+      
+      if (!popup) {
+        throw new Error('Dati popup non trovati');
+      }
       
       let parsedStyle = {};
       try {
