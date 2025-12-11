@@ -11,7 +11,12 @@ class SocketService {
 
     const serverUrl = (typeof window !== 'undefined' ? window.location.origin : ((process.env.REACT_APP_API_URL?.replace('/api', '') as string | undefined) || 'http://localhost:5001'));
     
-    this.socket = io(serverUrl, {
+    // In development, force port 5001 if we are on localhost:3000
+    const finalUrl = (process.env.NODE_ENV === 'development' && serverUrl.includes('localhost:3000')) 
+      ? 'http://localhost:5001' 
+      : serverUrl;
+
+    this.socket = io(finalUrl, {
       transports: ['polling', 'websocket'],
       timeout: 20000,
       forceNew: true,

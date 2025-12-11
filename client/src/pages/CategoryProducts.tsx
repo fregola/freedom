@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { categoryService, productService, businessService } from '../services/api';
 import { useProductEvents } from '../hooks/useSocket';
@@ -320,8 +320,19 @@ const FloatingBackButton = styled.button`
 `;
 
 const CategoryProducts: React.FC = () => {
-  const { categoryId } = useParams<{ categoryId: string }>();
+  const params = useParams();
+  // Support both 'id' (standard) and 'categoryId' (legacy/specific) parameter names
+  const categoryId = params.id || params.categoryId;
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBack = () => {
+    if (location.pathname.startsWith('/menu')) {
+      navigate('/menu');
+    } else {
+      navigate('/categories');
+    }
+  };
   
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
@@ -487,10 +498,6 @@ const CategoryProducts: React.FC = () => {
     fetchData();
   }, [categoryId]);
 
-  const handleBack = () => {
-    navigate('/menu');
-  };
-
   if (loading) {
     return (
       <PageContainer>
@@ -517,7 +524,7 @@ const CategoryProducts: React.FC = () => {
       <StickyBar>
         <Header>
           <HeaderLeft>
-            <BackButton onClick={() => navigate('/menu')}>
+            <BackButton onClick={handleBack}>
               {language === 'en' ? '← Back to Menu' : '← Torna al Menu'}
             </BackButton>
             <CategoryTitle>{language === 'en' ? (category?.name_en || category?.name) : (category?.name || 'Categoria')}</CategoryTitle>

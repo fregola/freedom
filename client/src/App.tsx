@@ -28,6 +28,7 @@ const App: React.FC = () => {
           {/* Rotte pubbliche per il menu */}
           <Route path="/" element={<PublicMenu />} />
           <Route path="/menu" element={<Navigate to="/" replace />} />
+          <Route path="/menu/category/:id" element={<CategoryProducts />} />
           <Route path="/menu/custom/:id" element={<PublicCustomMenu />} />
           
           {/* Rotte protette della dashboard */}
