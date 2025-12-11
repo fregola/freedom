@@ -302,9 +302,9 @@ const VideoBlock = styled.video<{ width: string; borderRadius: number }>`
   border-radius: ${({ borderRadius }) => borderRadius}px;
 `;
 
-const ButtonBlock = styled.a<{ bgColor: string; textColor: string; borderRadius: number; width: string }>`
+const ButtonBlock = styled.a<{ backgroundColor: string; textColor: string; borderRadius: number; width: string }>`
   display: inline-block;
-  background-color: ${({ bgColor }) => bgColor};
+  background-color: ${({ backgroundColor }) => backgroundColor};
   color: ${({ textColor }) => textColor};
   padding: 12px 24px;
   border-radius: ${({ borderRadius }) => borderRadius}px;
