@@ -12,9 +12,11 @@ class SocketService {
     const serverUrl = (typeof window !== 'undefined' ? window.location.origin : ((process.env.REACT_APP_API_URL?.replace('/api', '') as string | undefined) || 'http://localhost:5001'));
     
     this.socket = io(serverUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     this.socket.on('connect', () => {
