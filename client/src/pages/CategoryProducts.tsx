@@ -358,19 +358,30 @@ const CategoryProducts: React.FC = () => {
       const contextParent = directParent || (isTopLevel ? currentCat : currentCat);
 
       // Carica i prodotti del padre per permettere il filtro locale tra sottocategorie
-      const productsResponse = await productService.getByCategory(contextParent.id);
-      if (productsResponse.success) {
-        setProducts(productsResponse.data.products);
-        // Manteniamo la categoria in base al route corrente
-        setCategory(currentCat);
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Prodotti ricaricati con successo (contesto padre)');
+      try {
+        const productsResponse = await productService.getByCategory(contextParent.id);
+        if (productsResponse.success) {
+          setProducts(productsResponse.data.products);
+          // Manteniamo la categoria in base al route corrente
+          setCategory(currentCat);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Prodotti ricaricati con successo (contesto padre)');
+          }
+        } else {
+            console.error('Errore nel caricamento dei prodotti: response success false', productsResponse);
+            setError('Impossibile caricare i prodotti');
         }
+      } catch (prodErr) {
+        console.error('Errore chiamata API prodotti:', prodErr);
+        setError('Errore di connessione al server');
       }
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') {
         console.error('Errore nel ricaricamento dei prodotti (contesto padre):', err);
       }
+      setError('Errore generale nel caricamento');
+    } finally {
+        setLoading(false);
     }
   }, [categoryId]);
 
