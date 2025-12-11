@@ -163,7 +163,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           icon: '💬', 
           hidden: user?.role !== 'admin'
         },
-        { path: '/hall', label: 'Sala', icon: '🪑' },
       ],
     },
   ];

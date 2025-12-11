@@ -296,29 +296,6 @@ export const customMenuService = {
   },
 };
 
-export const roomService = {
-  getAll: async () => {
-    const response = await api.get('/rooms');
-    return response.data;
-  },
-  create: async (payload: { name: string; width: number; height: number }) => {
-    const response = await api.post('/rooms', payload);
-    return response.data;
-  },
-  update: async (id: number, payload: { name?: string; width?: number; height?: number }) => {
-    const response = await api.put(`/rooms/${id}`, payload);
-    return response.data;
-  },
-  setTables: async (id: number, tables: any[]) => {
-    const response = await api.put(`/rooms/${id}/tables`, { tables });
-    return response.data;
-  },
-  delete: async (id: number) => {
-    const response = await api.delete(`/rooms/${id}`);
-    return response.data;
-  },
-};
-
 export const qrCodeService = {
   getAll: async () => {
     const response = await api.get('/qr-codes');

@@ -8,7 +8,8 @@
     "dev": "nodemon index.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "db:cleanup": "node scripts/cleanup_db.js"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.2.1",

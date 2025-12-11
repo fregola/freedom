@@ -14,7 +14,6 @@ import Categories from './pages/Categories';
 import Products from './pages/Products';
 import BusinessInfo from './pages/BusinessInfo';
 import CustomMenus from './pages/CustomMenus';
-import Hall from './pages/Hall';
 import QrCodeManager from './pages/QrCodeManager';
 import PopupManager from './pages/PopupManager';
 import PopupBuilder from './pages/PopupBuilder';
@@ -27,12 +26,12 @@ const App: React.FC = () => {
           <Route path="/login" element={<LoginForm />} />
           
           {/* Rotte pubbliche per il menu */}
-          <Route path="/menu" element={<PublicMenu />} />
+          <Route path="/" element={<PublicMenu />} />
+          <Route path="/menu" element={<Navigate to="/" replace />} />
           <Route path="/menu/custom/:id" element={<PublicCustomMenu />} />
           
           {/* Rotte protette della dashboard */}
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="allergens" element={<Allergens />} />
             <Route path="ingredients" element={<Ingredients />} />
@@ -41,7 +40,6 @@ const App: React.FC = () => {
             <Route path="products" element={<Products />} />
             <Route path="business" element={<BusinessInfo />} />
             <Route path="custom-menus" element={<CustomMenus />} />
-            <Route path="hall" element={<Hall />} />
             <Route path="qr-manager" element={<QrCodeManager />} />
             <Route path="popups" element={<PopupManager />} />
             <Route path="popups/new" element={<PopupBuilder />} />

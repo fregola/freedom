@@ -191,28 +191,3 @@ CREATE TABLE IF NOT EXISTS custom_menu_items (
 CREATE INDEX IF NOT EXISTS idx_custom_menu_items_menu ON custom_menu_items(custom_menu_id);
 CREATE INDEX IF NOT EXISTS idx_custom_menu_items_position ON custom_menu_items(custom_menu_id, position);
 
-CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(120) NOT NULL,
-    width INTEGER NOT NULL,
-    height INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS room_tables (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_id INTEGER NOT NULL,
-    type VARCHAR(20) NOT NULL,
-    x INTEGER NOT NULL,
-    y INTEGER NOT NULL,
-    w INTEGER NOT NULL,
-    h INTEGER NOT NULL,
-    capacity INTEGER NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    label VARCHAR(120),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_room_tables_room ON room_tables(room_id);

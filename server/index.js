@@ -164,7 +164,6 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/custom-menus', require('./routes/customMenus'));
 app.use('/api/business', require('./routes/business'));
 app.use('/api/translate', require('./routes/translate'));
-app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/qr-codes', require('./routes/qrCodes'));
 app.use('/api/popups', require('./routes/popups'));
 
@@ -272,36 +271,42 @@ async function startServer() {
         await database.run(`CREATE INDEX IF NOT EXISTS idx_custom_menu_items_position ON custom_menu_items(custom_menu_id, position)`);
         // Aggiungi colonna visibilità se manca
         await database.ensureColumn('custom_menus', 'is_visible', 'BOOLEAN DEFAULT 0');
+
+        // Tabella popup
+        await database.run(`CREATE TABLE IF NOT EXISTS popups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL,
+            is_active BOOLEAN DEFAULT 0,
+            title VARCHAR(255),
+            body_text TEXT,
+            image_url VARCHAR(255),
+            button_text VARCHAR(100),
+            button_link VARCHAR(255),
+            style_config TEXT,
+            trigger_type VARCHAR(50),
+            trigger_delay INTEGER DEFAULT 0,
+            frequency VARCHAR(50),
+            blocks TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Tabella QR codes
+        await database.run(`CREATE TABLE IF NOT EXISTS qr_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid VARCHAR(36) NOT NULL UNIQUE,
+            name VARCHAR(100) NOT NULL,
+            destination_url VARCHAR(255) NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Garantisci che l'utente admin sia attivo se presente
         try {
             await database.run('UPDATE users SET is_active = 1 WHERE username = ? AND (is_active IS NULL OR is_active = 0)', ['admin']);
         } catch (e) {
             console.warn('Impossibile forzare is_active=1 per admin:', e?.message);
         }
-
-        await database.run(`CREATE TABLE IF NOT EXISTS rooms (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name VARCHAR(120) NOT NULL,
-            width INTEGER NOT NULL,
-            height INTEGER NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-        await database.run(`CREATE TABLE IF NOT EXISTS room_tables (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            room_id INTEGER NOT NULL,
-            type VARCHAR(20) NOT NULL,
-            x INTEGER NOT NULL,
-            y INTEGER NOT NULL,
-            w INTEGER NOT NULL,
-            h INTEGER NOT NULL,
-            capacity INTEGER NOT NULL,
-            status VARCHAR(20) NOT NULL,
-            label VARCHAR(120),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-        )`);
-        await database.run(`CREATE INDEX IF NOT EXISTS idx_room_tables_room ON room_tables(room_id)`);
 
         // Avvia il server HTTP con Socket.IO
         server.listen(PORT, () => {
