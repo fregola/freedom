@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { productService, categoryService, allergenService, ingredientService, businessService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -379,6 +380,8 @@ const Products: React.FC = () => {
   const [currentImagePath, setCurrentImagePath] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteName, setDeleteName] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -525,17 +528,18 @@ const Products: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo prodotto?')) {
-      return;
-    }
-
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await productService.delete(id);
+      await productService.delete(deleteId);
       await fetchData();
+      setDeleteId(null);
+      setDeleteName(null);
     } catch (err: any) {
       console.error('Errore nell\'eliminazione:', err);
       setError(err.response?.data?.message || 'Errore nell\'eliminazione del prodotto');
+      setDeleteId(null);
+      setDeleteName(null);
     }
   };
 
@@ -728,7 +732,10 @@ const Products: React.FC = () => {
                         <Button
                           variant="danger"
                           size="small"
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => {
+                            setDeleteId(product.id);
+                            setDeleteName(product.name);
+                          }}
                         >
                           Elimina
                         </Button>
@@ -854,7 +861,10 @@ const Products: React.FC = () => {
             <FormGroup>
               <Label>Ingredienti</Label>
               <CheckboxGroup>
-                {ingredients.map(ingredient => (
+                {ingredients
+                  .slice()
+                  .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+                  .map(ingredient => (
                   <CheckboxLabel key={ingredient.id}>
                     <Checkbox
                       checked={formData.ingredient_ids.includes(ingredient.id)}
@@ -869,7 +879,10 @@ const Products: React.FC = () => {
             <FormGroup>
               <Label>Allergeni</Label>
               <CheckboxGroup>
-                {allergens.map(allergen => (
+                {allergens
+                  .slice()
+                  .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+                  .map(allergen => (
                   <CheckboxLabel key={allergen.id}>
                     <Checkbox
                       checked={formData.allergen_ids.includes(allergen.id)}
@@ -910,6 +923,22 @@ const Products: React.FC = () => {
           </Form>
         </ModalContent>
       </Modal>
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina prodotto"
+        message={
+          deleteName
+            ? `Sei sicuro di voler eliminare il prodotto "${deleteName}"?`
+            : 'Sei sicuro di voler eliminare questo prodotto?'
+        }
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => {
+          setDeleteId(null);
+          setDeleteName(null);
+        }}
+      />
     </PageContainer>
   );
 };

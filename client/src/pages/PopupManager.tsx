@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { popupService } from '../services/api';
 
 const Container = styled.div`
@@ -84,6 +85,7 @@ const PopupManager: React.FC = () => {
   const navigate = useNavigate();
   const [popups, setPopups] = useState<Popup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
     loadPopups();
@@ -100,13 +102,15 @@ const PopupManager: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo popup?')) return;
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await popupService.delete(id);
-      loadPopups();
+      await popupService.delete(deleteId);
+      await loadPopups();
+      setDeleteId(null);
     } catch (error) {
       console.error('Error deleting popup:', error);
+      setDeleteId(null);
     }
   };
 
@@ -150,7 +154,7 @@ const PopupManager: React.FC = () => {
                 <Button 
                   size="small" 
                   variant="danger" 
-                  onClick={() => handleDelete(popup.id)}
+                  onClick={() => setDeleteId(popup.id)}
                 >
                   Elimina
                 </Button>
@@ -159,6 +163,16 @@ const PopupManager: React.FC = () => {
           ))}
         </Grid>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina popup"
+        message="Sei sicuro di voler eliminare questo popup?"
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteId(null)}
+      />
     </Container>
   );
 };

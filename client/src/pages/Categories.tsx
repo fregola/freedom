@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { categoryService } from '../services/api';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
 import { useAuth } from '../contexts/AuthContext';
@@ -268,6 +269,7 @@ const Categories: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [submitting, setSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // Hook per la traduzione automatica del nome
   const { translatedText: translatedName } = useAutoTranslate(
@@ -466,8 +468,7 @@ const Categories: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    // Verifica se la categoria ha figli
+  const handleDeleteRequest = (id: number) => {
     const hasChildren = categories.some(cat => cat.parent_id === id);
     
     if (hasChildren) {
@@ -475,15 +476,18 @@ const Categories: React.FC = () => {
       return;
     }
     
-    if (!window.confirm('Sei sicuro di voler eliminare questa categoria?')) {
-      return;
-    }
-    
+    setDeleteId(id);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await categoryService.delete(id);
+      await categoryService.delete(deleteId);
       await fetchCategories();
+      setDeleteId(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Errore nell\'eliminazione');
+      setDeleteId(null);
     }
   };
 
@@ -599,7 +603,7 @@ const Categories: React.FC = () => {
                         <Button
                           size="small"
                           variant="danger"
-                          onClick={() => handleDelete(category.id)}
+                          onClick={() => handleDeleteRequest(category.id)}
                         >
                           Elimina
                         </Button>
@@ -725,7 +729,17 @@ const Categories: React.FC = () => {
           </Form>
         </ModalContent>
       </Modal>
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina categoria"
+        message="Sei sicuro di voler eliminare questa categoria?"
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteId(null)}
+      />
     </PageContainer>
   );
 };
+
 export default Categories;

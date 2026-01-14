@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import { ingredientService } from '../services/api';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import { ingredientService, allergenService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
 
@@ -240,6 +241,9 @@ const Ingredients: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [submitting, setSubmitting] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteName, setDeleteName] = useState<string | null>(null);
 
   // Hook per la traduzione automatica del nome
   const { translatedText: translatedName } = useAutoTranslate(
@@ -286,9 +290,58 @@ const Ingredients: React.FC = () => {
     }
   };
 
-  const filteredIngredients = Array.isArray(ingredients) ? ingredients.filter(ingredient =>
-    ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const copyIngredientsToAllergens = async () => {
+    try {
+      setCopying(true);
+      setError(null);
+
+      const allergensResponse = await allergenService.getAll();
+      const existingAllergens = allergensResponse.data?.allergens || [];
+      const existingNames = new Set(
+        existingAllergens
+          .map((a: any) => a.name?.toLowerCase().trim())
+          .filter(Boolean)
+      );
+
+      const ingredientsToCopy = ingredients.filter(ingredient => {
+        const name = ingredient.name?.toLowerCase().trim();
+        return name && !existingNames.has(name);
+      });
+
+      for (const ingredient of ingredientsToCopy) {
+        const isDefaultIngredientIcon =
+          !ingredient.icon || ingredient.icon === '🥄';
+
+        const payload: any = {
+          name: ingredient.name,
+        };
+
+        if (ingredient.name_en) {
+          payload.name_en = ingredient.name_en;
+        }
+
+        if (!isDefaultIngredientIcon) {
+          payload.icon = ingredient.icon;
+        }
+
+        await allergenService.create(payload);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Errore nella copia degli ingredienti come allergeni');
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const filteredIngredients = Array.isArray(ingredients)
+    ? ingredients
+        .filter(ingredient =>
+          ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, 'it', { sensitivity: 'base' })
+        )
+    : [];
 
   const openCreateModal = () => {
     setEditingIngredient(null);
@@ -354,16 +407,17 @@ const Ingredients: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo ingrediente?')) {
-      return;
-    }
-    
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await ingredientService.delete(id);
+      await ingredientService.delete(deleteId);
       await fetchData();
+      setDeleteId(null);
+      setDeleteName(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Errore nell\'eliminazione');
+      setDeleteId(null);
+      setDeleteName(null);
     }
   };
 
@@ -387,9 +441,18 @@ const Ingredients: React.FC = () => {
             fullWidth
           />
           {canEdit && (
-            <Button onClick={openCreateModal}>
-              Nuovo Ingrediente
-            </Button>
+            <>
+              <Button onClick={openCreateModal}>
+                Nuovo Ingrediente
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={copyIngredientsToAllergens}
+                disabled={copying || ingredients.length === 0}
+              >
+                {copying ? 'Copia in corso...' : 'Copia in allergeni'}
+              </Button>
+            </>
           )}
         </SearchContainer>
       </PageHeader>
@@ -437,7 +500,10 @@ const Ingredients: React.FC = () => {
                         <Button
                           size="small"
                           variant="danger"
-                          onClick={() => handleDelete(ingredient.id)}
+                          onClick={() => {
+                            setDeleteId(ingredient.id);
+                            setDeleteName(ingredient.name);
+                          }}
                         >
                           Elimina
                         </Button>
@@ -506,6 +572,22 @@ const Ingredients: React.FC = () => {
           </Form>
         </ModalContent>
       </Modal>
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina ingrediente"
+        message={
+          deleteName
+            ? `Sei sicuro di voler eliminare l'ingrediente "${deleteName}"?`
+            : 'Sei sicuro di voler eliminare questo ingrediente?'
+        }
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => {
+          setDeleteId(null);
+          setDeleteName(null);
+        }}
+      />
     </PageContainer>
   );
 };

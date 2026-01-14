@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { allergenService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
@@ -231,6 +232,8 @@ const Allergens: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [submitting, setSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteName, setDeleteName] = useState<string | null>(null);
 
   // Hook per la traduzione automatica del nome
   const { translatedText: translatedName, isTranslating: isTranslatingName } = useAutoTranslate(
@@ -263,9 +266,15 @@ const Allergens: React.FC = () => {
     }
   };
 
-  const filteredAllergens = Array.isArray(allergens) ? allergens.filter(allergen =>
-    allergen.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const filteredAllergens = Array.isArray(allergens)
+    ? allergens
+        .filter(allergen =>
+          allergen.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, 'it', { sensitivity: 'base' })
+        )
+    : [];
 
   const renderIcon = (icon: string) => {
     if (!icon || icon.trim() === '') {
@@ -351,16 +360,17 @@ const Allergens: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo allergene?')) {
-      return;
-    }
-    
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await allergenService.delete(id);
+      await allergenService.delete(deleteId);
       await fetchAllergens();
+      setDeleteId(null);
+      setDeleteName(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Errore nell\'eliminazione');
+      setDeleteId(null);
+      setDeleteName(null);
     }
   };
 
@@ -434,7 +444,10 @@ const Allergens: React.FC = () => {
                         <Button
                           size="small"
                           variant="danger"
-                          onClick={() => handleDelete(allergen.id)}
+                          onClick={() => {
+                            setDeleteId(allergen.id);
+                            setDeleteName(allergen.name);
+                          }}
                         >
                           Elimina
                         </Button>
@@ -510,6 +523,22 @@ const Allergens: React.FC = () => {
           </Form>
         </ModalContent>
       </Modal>
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina allergene"
+        message={
+          deleteName
+            ? `Sei sicuro di voler eliminare l'allergene "${deleteName}"?`
+            : 'Sei sicuro di voler eliminare questo allergene?'
+        }
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => {
+          setDeleteId(null);
+          setDeleteName(null);
+        }}
+      />
     </PageContainer>
   );
 };

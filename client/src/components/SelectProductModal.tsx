@@ -358,7 +358,10 @@ const SelectProductModal: React.FC<Props> = ({ isOpen, onClose, onSelect, editPr
                   </RowBetween>
                   <Input placeholder={`Cerca ingredienti (${selectedIngredientIds.length} selezionati)`} value={ingredientQuery} onChange={(e) => setIngredientQuery(e.target.value)} fullWidth />
                   <CheckboxGrid>
-                    {ingredients.filter(i => i.name.toLowerCase().includes(ingredientQuery.toLowerCase())).map(i => (
+                    {ingredients
+                      .filter(i => i.name.toLowerCase().includes(ingredientQuery.toLowerCase()))
+                      .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+                      .map(i => (
                       <label key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <input
                           type="checkbox"
@@ -385,7 +388,10 @@ const SelectProductModal: React.FC<Props> = ({ isOpen, onClose, onSelect, editPr
                   </RowBetween>
                   <Input placeholder={`Cerca allergeni (${selectedAllergenIds.length} selezionati)`} value={allergenQuery} onChange={(e) => setAllergenQuery(e.target.value)} fullWidth />
                   <CheckboxGrid>
-                    {allergens.filter(a => a.name.toLowerCase().includes(allergenQuery.toLowerCase())).map(a => (
+                    {allergens
+                      .filter(a => a.name.toLowerCase().includes(allergenQuery.toLowerCase()))
+                      .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+                      .map(a => (
                       <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <input
                           type="checkbox"

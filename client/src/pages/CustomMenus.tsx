@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { productService, customMenuService } from '../services/api';
 import SelectProductModal from '../components/SelectProductModal';
 
@@ -123,6 +124,7 @@ const CustomMenus: React.FC = () => {
   const [loadingMenus, setLoadingMenus] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const canSave = useMemo(() => name.trim().length > 0 && items.length > 0, [name, items]);
 
@@ -235,11 +237,10 @@ const CustomMenus: React.FC = () => {
     setError(null);
   };
 
-  const handleDelete = async (id: number | string) => {
-    const ok = window.confirm('Eliminare definitivamente questo menu?');
-    if (!ok) return;
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await customMenuService.delete(Number(id));
+      await customMenuService.delete(Number(deleteId));
       const res: any = await customMenuService.getAll();
       const list = res?.data?.menus || [];
       const mapped: CustomMenu[] = list.map((m: any) => ({
@@ -250,8 +251,9 @@ const CustomMenus: React.FC = () => {
         items: Array.isArray(m.items) ? m.items.map((it: any) => ({ product: { id: it.product_id, name: it.name, category_id: it.category_id, category_name: it.category_name, image_path: it.image_path } })) : [],
       }));
       setMenus(mapped);
+      setDeleteId(null);
     } catch (e) {
-      // opzionale: mostrare errore
+      setDeleteId(null);
     }
   };
 
@@ -361,7 +363,7 @@ const CustomMenus: React.FC = () => {
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Button size="small" variant="secondary" onClick={() => startEdit(m)}>Modifica</Button>
-                      <Button size="small" variant="danger" onClick={() => handleDelete(m.id)}>Elimina</Button>
+                      <Button size="small" variant="danger" onClick={() => setDeleteId(Number(m.id))}>Elimina</Button>
                     </div>
                   </td>
                 </tr>
@@ -384,6 +386,16 @@ const CustomMenus: React.FC = () => {
           setEditingItemIndex(null);
         }}
         editProductId={editingItemIndex !== null ? items[editingItemIndex]?.product?.id : undefined}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina menu"
+        message="Eliminare definitivamente questo menu?"
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteId(null)}
       />
     </PageContainer>
   );

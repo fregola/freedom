@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Button from '../components/common/Button';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { qrCodeService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -198,6 +199,7 @@ const QrCodeManager: React.FC = () => {
   const [editingQr, setEditingQr] = useState<QrCode | null>(null);
   const [formData, setFormData] = useState({ name: '', destination_url: '' });
   const [qrImages, setQrImages] = useState<Record<string, string>>({});
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const apiOrigin = typeof window !== 'undefined' ? window.location.origin : ((process.env.REACT_APP_API_URL as string | undefined) || '');
 
@@ -270,15 +272,17 @@ const QrCodeManager: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questo QR Code?')) return;
+  const handleDeleteConfirmed = async () => {
+    if (deleteId == null) return;
     try {
-      await qrCodeService.delete(id);
+      await qrCodeService.delete(deleteId);
       setMessage({ type: 'success', text: 'QR Code eliminato' });
+      setDeleteId(null);
       loadQrCodes();
     } catch (error) {
       console.error('Errore eliminazione QR:', error);
       setMessage({ type: 'error', text: 'Errore durante l\'eliminazione' });
+      setDeleteId(null);
     }
   };
 
@@ -371,7 +375,7 @@ const QrCodeManager: React.FC = () => {
                   <Button size="small" variant="secondary" onClick={() => handleDownload(qr.uuid, qr.name)} title="Scarica PNG">
                     ⬇️
                   </Button>
-                  <Button size="small" variant="danger" onClick={() => handleDelete(qr.id)} title="Elimina">
+                  <Button size="small" variant="danger" onClick={() => setDeleteId(qr.id)} title="Elimina">
                     🗑️
                   </Button>
                 </QrActions>
@@ -425,6 +429,16 @@ const QrCodeManager: React.FC = () => {
           </ModalContent>
         </Modal>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteId != null}
+        title="Elimina QR Code"
+        message="Sei sicuro di voler eliminare questo QR Code?"
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteId(null)}
+      />
     </QrContainer>
   );
 };
