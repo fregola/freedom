@@ -26,6 +26,7 @@ interface Product {
 interface Category {
   id: number;
   name: string;
+  parent_id?: number | null;
   parent_name?: string;
   display_name?: string;
 }
@@ -79,6 +80,14 @@ const SearchContainer = styled.div`
   @media (max-width: 767px) {
     max-width: none;
   }
+`;
+
+const FiltersRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
 `;
 
 const Card = styled.div`
@@ -363,6 +372,8 @@ const Products: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -394,18 +405,15 @@ const Products: React.FC = () => {
       setLoading(true);
       const [productsRes, categoriesRes, allergensRes, ingredientsRes] = await Promise.all([
         productService.getAll(),
-        categoryService.getConcatenated(),
+        categoryService.getAll(),
         allergenService.getAll(),
         ingredientService.getAll()
       ]);
       
       setProducts(productsRes.data?.products || []);
       
-      // Rimuovi duplicati dalle categorie basandosi sull'ID
-      const uniqueCategories = (categoriesRes.data?.categories || []).filter((category: any, index: number, self: any[]) => 
-        index === self.findIndex((c: any) => c.id === category.id)
-      );
-      setCategories(uniqueCategories);
+      const allCategories = categoriesRes.data?.categories || [];
+      setCategories(allCategories);
       
       setAllergens(allergensRes.data?.allergens || []);
       setIngredients(ingredientsRes.data?.ingredients || []);
@@ -417,10 +425,46 @@ const Products: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const searchTermLower = searchTerm.toLowerCase();
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTermLower) ||
+      product.category_name?.toLowerCase().includes(searchTermLower);
+
+    if (!matchesSearch) {
+      return false;
+    }
+
+    let matchesCategory = true;
+    if (categoryFilter !== 'all') {
+      const categoryIdNumber = parseInt(categoryFilter, 10);
+      const childrenIds = categories
+        .filter(c => c.parent_id === categoryIdNumber)
+        .map(c => c.id);
+      const allowedIds = [categoryIdNumber, ...childrenIds];
+      matchesCategory = allowedIds.includes(product.category_id || 0);
+    }
+
+    if (!matchesCategory) {
+      return false;
+    }
+
+    if (subcategoryFilter !== 'all') {
+      const subIdNumber = parseInt(subcategoryFilter, 10);
+      if ((product.category_id || 0) !== subIdNumber) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const topLevelCategories = categories.filter(c => !c.parent_id);
+  const availableSubcategories =
+    categoryFilter === 'all'
+      ? []
+      : categories.filter(c => c.parent_id === parseInt(categoryFilter, 10));
 
   const openModal = (product?: Product) => {
     if (product) {
@@ -658,7 +702,7 @@ const Products: React.FC = () => {
         <SearchContainer>
           <Input
             type="text"
-            placeholder="Cerca prodotti..."
+            placeholder="Cerca per nome o categoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -669,6 +713,42 @@ const Products: React.FC = () => {
           )}
         </SearchContainer>
       </PageHeader>
+
+      <FiltersRow>
+        <FormGroup>
+          <Label>Categoria</Label>
+          <Select
+            value={categoryFilter}
+            onChange={(e) => {
+              const value = e.target.value;
+              setCategoryFilter(value);
+              setSubcategoryFilter('all');
+            }}
+          >
+            <option value="all">Tutte le categorie</option>
+            {topLevelCategories.map(category => (
+              <option key={category.id} value={category.id.toString()}>
+                {category.name}
+              </option>
+            ))}
+          </Select>
+        </FormGroup>
+        <FormGroup>
+          <Label>Sottocategoria</Label>
+          <Select
+            value={subcategoryFilter}
+            onChange={(e) => setSubcategoryFilter(e.target.value)}
+            disabled={categoryFilter === 'all' || availableSubcategories.length === 0}
+          >
+            <option value="all">Tutte le sottocategorie</option>
+            {availableSubcategories.map(sub => (
+              <option key={sub.id} value={sub.id.toString()}>
+                {sub.name}
+              </option>
+            ))}
+          </Select>
+        </FormGroup>
+      </FiltersRow>
 
       {user?.role === 'admin' && (
         <div style={{ marginBottom: 16 }}>
@@ -820,10 +900,10 @@ const Products: React.FC = () => {
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                 >
-                  <option value="">Seleziona categoria</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.display_name || category.name}
+                    <option value="">Seleziona categoria</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                      {category.parent_name ? `${category.parent_name} -- ${category.name}` : category.name}
                     </option>
                   ))}
                 </Select>

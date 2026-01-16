@@ -218,12 +218,28 @@ const TagsContainer = styled.div`
   margin-top: 15px;
 `;
 
-// Spazio extra sotto i tag sottocategoria
 const SubcategoryTags = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0; /* evito doppio spazio, lo gestisce la barra sticky */
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin: 8px 0 4px 0;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(204, 157, 109, 0.5) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(204, 157, 109, 0.6);
+    border-radius: 999px;
+  }
 `;
 
 const IngredientsSection = styled.div`
@@ -263,9 +279,9 @@ const ItemsList = styled.div`
 const SubcategoryChip = styled.button<{ $active?: boolean }>`
   background: rgba(204, 157, 109, 0.12);
   color: #b8906b;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.78rem;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
   font-weight: 600;
   border: 1px solid rgba(204, 157, 109, 0.4);
   cursor: pointer;
@@ -541,11 +557,6 @@ const CategoryProducts: React.FC = () => {
             </BackButton>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <CategoryTitle>{language === 'en' ? (displayCategory?.name_en || displayCategory?.name) : (displayCategory?.name || 'Categoria')}</CategoryTitle>
-              {(language === 'en' ? displayCategory?.description_en : displayCategory?.description) && (
-                <CategoryDescription>
-                  {language === 'en' ? displayCategory?.description_en : displayCategory?.description}
-                </CategoryDescription>
-              )}
             </div>
           </HeaderLeft>
         </Header>
@@ -573,6 +584,11 @@ const CategoryProducts: React.FC = () => {
               </SubcategoryChip>
             ))}
           </SubcategoryTags>
+        )}
+        {(language === 'en' ? displayCategory?.description_en : displayCategory?.description) && (
+          <CategoryDescription>
+            {language === 'en' ? displayCategory?.description_en : displayCategory?.description}
+          </CategoryDescription>
         )}
       </StickyBar>
 
