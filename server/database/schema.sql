@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    description_en TEXT,
     name_en VARCHAR(100),
     price DECIMAL(10,2),
     price_unit VARCHAR(20),

@@ -20,7 +20,7 @@ const productValidation = [
     .isLength({ min: 1, max: 100 })
     .withMessage('Il nome deve essere tra 1 e 100 caratteri'),
   body('price')
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Il prezzo deve essere un numero positivo'),
   body('price_unit')
@@ -32,7 +32,7 @@ const productValidation = [
       throw new Error("L'unità di prezzo deve essere una tra: g, hg, l");
     }),
   body('category_id')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1 })
     .withMessage('L\'ID categoria deve essere un numero intero positivo'),
   body('image_path')
@@ -390,6 +390,7 @@ const createProduct = async (req, res) => {
     // Validazione input
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validazione fallita (updateProduct):', JSON.stringify(errors.array(), null, 2));
       return res.status(400).json({
         success: false,
         message: 'Dati non validi',
@@ -531,6 +532,7 @@ const updateProduct = async (req, res) => {
     // Validazione input
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validazione fallita (updateProduct):', JSON.stringify(errors.array(), null, 2));
       return res.status(400).json({
         success: false,
         message: 'Dati non validi',
@@ -539,7 +541,7 @@ const updateProduct = async (req, res) => {
     }
     
     const { id } = req.params;
-    const { name, name_en: provided_name_en, price, price_unit, category_id, is_available, allergen_ids, ingredient_ids } = req.body;
+    const { name, name_en: provided_name_en, description, description_en, price, price_unit, category_id, is_available, allergen_ids, ingredient_ids } = req.body;
     
     // Debug: log dei dati ricevuti per update
     console.log('Dati ricevuti nel body (update):', {
@@ -556,8 +558,16 @@ const updateProduct = async (req, res) => {
     });
     
     // Gestione corretta degli array da FormData per update
-    const processedAllergenIds = req.body['allergen_ids[]'] || allergen_ids || [];
-    const processedIngredientIds = req.body['ingredient_ids[]'] || ingredient_ids || [];
+    let processedAllergenIds = req.body['allergen_ids[]'] || allergen_ids || [];
+    let processedIngredientIds = req.body['ingredient_ids[]'] || ingredient_ids || [];
+    
+    // Normalizza in array se è arrivato come stringa singola
+    if (processedAllergenIds && !Array.isArray(processedAllergenIds)) {
+      processedAllergenIds = [processedAllergenIds];
+    }
+    if (processedIngredientIds && !Array.isArray(processedIngredientIds)) {
+      processedIngredientIds = [processedIngredientIds];
+    }
     
     console.log('Array processati (update):', {
       processedAllergenIds,
