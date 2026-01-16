@@ -527,6 +527,10 @@ const CategoryProducts: React.FC = () => {
     );
   }
 
+  const displayCategory = activeSubcategoryId
+    ? subcategories.find((sub) => sub.id === activeSubcategoryId) || category
+    : category;
+
   return (
     <PageContainer>
       <StickyBar>
@@ -536,10 +540,10 @@ const CategoryProducts: React.FC = () => {
               {language === 'en' ? '← Back to Menu' : '← Torna al Menu'}
             </BackButton>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <CategoryTitle>{language === 'en' ? (category?.name_en || category?.name) : (category?.name || 'Categoria')}</CategoryTitle>
-              {(language === 'en' ? category?.description_en : category?.description) && (
+              <CategoryTitle>{language === 'en' ? (displayCategory?.name_en || displayCategory?.name) : (displayCategory?.name || 'Categoria')}</CategoryTitle>
+              {(language === 'en' ? displayCategory?.description_en : displayCategory?.description) && (
                 <CategoryDescription>
-                  {language === 'en' ? category?.description_en : category?.description}
+                  {language === 'en' ? displayCategory?.description_en : displayCategory?.description}
                 </CategoryDescription>
               )}
             </div>
