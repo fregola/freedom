@@ -11,6 +11,8 @@ interface Product {
   id: number;
   name: string;
   name_en?: string;
+  description?: string;
+  description_en?: string;
   price?: number;
   price_unit?: string;
   category_id?: number;
@@ -376,9 +378,12 @@ const Products: React.FC = () => {
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [ingredientFilter, setIngredientFilter] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     name_en: '',
+    description: '',
+    description_en: '',
     price: '',
     price_unit: '',
     category_id: '',
@@ -472,6 +477,8 @@ const Products: React.FC = () => {
       setFormData({
         name: product.name,
         name_en: product.name_en || '',
+        description: product.description || '',
+        description_en: product.description_en || '',
         price: product.price?.toString() || '',
         price_unit: product.price_unit || '',
         category_id: product.category_id?.toString() || '',
@@ -482,11 +489,14 @@ const Products: React.FC = () => {
       setCurrentImagePath(product.image_path || null);
       setImagePreview(null);
       setSelectedImage(null);
+      setIngredientFilter('');
     } else {
       setEditingProduct(null);
       setFormData({
         name: '',
         name_en: '',
+        description: '',
+        description_en: '',
         price: '',
         price_unit: '',
         category_id: '',
@@ -497,6 +507,7 @@ const Products: React.FC = () => {
       setCurrentImagePath(null);
       setImagePreview(null);
       setSelectedImage(null);
+      setIngredientFilter('');
     }
     setFormError(null);
     setIsModalOpen(true);
@@ -522,6 +533,14 @@ const Products: React.FC = () => {
       
       if (formData.name_en.trim()) {
         formDataToSend.append('name_en', formData.name_en.trim());
+      }
+      
+      if (formData.description && formData.description.trim()) {
+        formDataToSend.append('description', formData.description.trim());
+      }
+
+      if (formData.description_en && formData.description_en.trim()) {
+        formDataToSend.append('description_en', formData.description_en.trim());
       }
       
       if (formData.price) {
@@ -894,6 +913,43 @@ const Products: React.FC = () => {
 
             <FormRow>
               <FormGroup>
+                <Label htmlFor="description">Descrizione</Label>
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Descrizione del prodotto (opzionale)"
+                  style={{
+                    padding: '12px 16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    minHeight: '80px',
+                    resize: 'vertical'
+                  }}
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label htmlFor="description_en">Descrizione (Inglese)</Label>
+                <textarea
+                  id="description_en"
+                  value={formData.description_en}
+                  onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+                  placeholder="Descrizione in inglese (opzionale)"
+                  style={{
+                    padding: '12px 16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    minHeight: '80px',
+                    resize: 'vertical'
+                  }}
+                />
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup>
                 <Label htmlFor="category_id">Categoria</Label>
                 <Select
                   id="category_id"
@@ -967,10 +1023,25 @@ const Products: React.FC = () => {
 
             <FormGroup>
               <Label>Ingredienti</Label>
+              <div style={{ marginBottom: '8px' }}>
+                <Input
+                  type="text"
+                  placeholder="Cerca ingrediente..."
+                  value={ingredientFilter}
+                  onChange={(e) => setIngredientFilter(e.target.value)}
+                />
+              </div>
               <CheckboxGroup>
                 {ingredients
                   .slice()
                   .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+                  .filter(ingredient => {
+                    if (!ingredientFilter.trim()) return true;
+                    const search = ingredientFilter.toLowerCase();
+                    const nameIt = ingredient.name.toLowerCase();
+                    const nameEn = (ingredient.name_en || '').toLowerCase();
+                    return nameIt.includes(search) || nameEn.includes(search);
+                  })
                   .map(ingredient => (
                   <CheckboxLabel key={ingredient.id}>
                     <Checkbox

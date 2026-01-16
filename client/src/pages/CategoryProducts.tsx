@@ -623,12 +623,6 @@ const CategoryProducts: React.FC = () => {
 
               <ProductName>{language === 'en' ? (product.name_en || product.name) : product.name}</ProductName>
               
-              {(language === 'en' ? (product.description_en || product.description) : product.description) && (
-                <ProductDescription>
-                  {language === 'en' ? (product.description_en || product.description) : product.description}
-                </ProductDescription>
-              )}
-              
               {/* Ingredienti */}
               {product.ingredients && product.ingredients.length > 0 && (
                 <IngredientsSection>
@@ -673,6 +667,12 @@ const CategoryProducts: React.FC = () => {
                     </ItemsList>
                   </SectionRow>
                 </AllergensSection>
+              )}
+
+              {(language === 'en' ? (product.description_en || product.description) : product.description) && (
+                <ProductDescription>
+                  {language === 'en' ? (product.description_en || product.description) : product.description}
+                </ProductDescription>
               )}
             </ProductCard>
           ))}

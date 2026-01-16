@@ -397,12 +397,14 @@ const createProduct = async (req, res) => {
       });
     }
     
-    const { name, name_en: provided_name_en, price, price_unit, category_id, is_available, allergen_ids, ingredient_ids } = req.body;
+    const { name, name_en: provided_name_en, description, description_en, price, price_unit, category_id, is_available, allergen_ids, ingredient_ids } = req.body;
     
     // Debug: log dei dati ricevuti
     console.log('Dati ricevuti nel body:', {
       name,
       provided_name_en,
+      description,
+      description_en,
       price,
       price_unit,
       category_id,
@@ -449,6 +451,8 @@ const createProduct = async (req, res) => {
     const productData = {
       name,
       name_en,
+      description: description || null,
+      description_en: description_en || null,
       price: price || null,
       price_unit: price_unit || null,
       category_id: category_id || null,
@@ -603,6 +607,8 @@ const updateProduct = async (req, res) => {
     const updateData = {
       name: name || existingProduct.name,
       name_en,
+      description: description !== undefined ? description : existingProduct.description,
+      description_en: description_en !== undefined ? description_en : existingProduct.description_en,
       price: price !== undefined ? price : existingProduct.price,
       price_unit: price_unit !== undefined ? normalizedPriceUnit : existingProduct.price_unit,
       category_id: category_id !== undefined ? category_id : existingProduct.category_id,

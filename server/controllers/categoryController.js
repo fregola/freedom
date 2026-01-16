@@ -269,6 +269,33 @@ const createCategory = async (req, res) => {
       });
     }
 
+    // Calcolo sort_order automatico se non fornito: numeri che vanno di 10 in 10
+    let effectiveSortOrder = null;
+    const sortOrderProvided = sort_order !== undefined && sort_order !== null && String(sort_order).trim() !== '';
+    if (sortOrderProvided) {
+      const parsed = Number(sort_order);
+      if (Number.isInteger(parsed) && parsed >= 0) {
+        effectiveSortOrder = parsed;
+      }
+    }
+
+    if (effectiveSortOrder === null) {
+      let maxRow;
+      if (parent_id) {
+        maxRow = await database.get(
+          'SELECT MAX(sort_order) AS max_order FROM categories WHERE parent_id = ?',
+          [parent_id]
+        );
+      } else {
+        maxRow = await database.get(
+          'SELECT MAX(sort_order) AS max_order FROM categories WHERE parent_id IS NULL',
+          []
+        );
+      }
+      const maxOrder = maxRow && typeof maxRow.max_order === 'number' ? maxRow.max_order : 0;
+      effectiveSortOrder = maxOrder > 0 ? maxOrder + 10 : 10;
+    }
+
     // Inserisci anche description e description_en
     const result = await database.insert('categories', {
       name: name.trim(),
@@ -276,7 +303,7 @@ const createCategory = async (req, res) => {
       description_en: description_en || null,
       parent_id: parent_id || null,
       name_en: name_en,
-      sort_order: Number.isInteger(Number(sort_order)) ? Number(sort_order) : 0,
+      sort_order: effectiveSortOrder,
       is_active: is_active !== undefined ? is_active : true
     });
 
@@ -382,14 +409,24 @@ const updateCategory = async (req, res) => {
       });
     }
 
-    // Aggiorna anche description e description_en
+    // Aggiorna anche description e description_en.
+    // Se sort_order non è fornito o è stringa vuota, mantiene il valore esistente.
+    let updatedSortOrder = existing[0].sort_order ?? 0;
+    const sortOrderProvided = sort_order !== undefined && sort_order !== null && String(sort_order).trim() !== '';
+    if (sortOrderProvided) {
+      const parsed = Number(sort_order);
+      if (Number.isInteger(parsed) && parsed >= 0) {
+        updatedSortOrder = parsed;
+      }
+    }
+
     await database.update('categories', {
       name: name.trim(),
       description: description || null,
       description_en: description_en || null,
       parent_id: parent_id || null,
       name_en: name_en,
-      sort_order: Number.isInteger(Number(sort_order)) ? Number(sort_order) : (existing[0].sort_order ?? 0),
+      sort_order: updatedSortOrder,
       is_active: is_active !== undefined ? is_active : existing[0].is_active
     }, 'WHERE id = ?', [id]);
 
@@ -463,4 +500,3 @@ module.exports = {
   deleteCategory,
   categoryValidation
 };
-
