@@ -382,6 +382,8 @@ const Products: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteName, setDeleteName] = useState<string | null>(null);
+  const [showMissingFieldsWarning, setShowMissingFieldsWarning] = useState(false);
+  const [missingFieldsMessage, setMissingFieldsMessage] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -465,14 +467,7 @@ const Products: React.FC = () => {
     setCurrentImagePath(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      setFormError('Il nome è obbligatorio');
-      return;
-    }
-
+  const executeSubmit = async () => {
     try {
       setSubmitting(true);
       setFormError(null);
@@ -520,12 +515,44 @@ const Products: React.FC = () => {
 
       await fetchData();
       closeModal();
+      setShowMissingFieldsWarning(false);
     } catch (err: any) {
       console.error('Errore nel salvataggio:', err);
       setFormError(err.response?.data?.message || 'Errore nel salvataggio del prodotto');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      setFormError('Il nome è obbligatorio');
+      return;
+    }
+
+    // Check for missing price or category only for new products (or always? "quando inserisco un nuovo prodotto")
+    // User said "when I insert a new product", but it might be useful for edits too.
+    // However, to be safe and strictly follow "quando inserisco", I can check if !editingProduct.
+    // But usually these checks are good for edits too if the user clears the field.
+    // Let's apply it generally but focus on the "empty" state.
+
+    const isPriceMissing = !formData.price || formData.price.trim() === '' || parseFloat(formData.price) === 0;
+    const isCategoryMissing = !formData.category_id || formData.category_id === '';
+
+    if (isPriceMissing || isCategoryMissing) {
+      const missingParts = [];
+      if (isPriceMissing) missingParts.push('prezzo');
+      if (isCategoryMissing) missingParts.push('categoria');
+      
+      const message = `Sei sicuro di voler creare il prodotto senza ${missingParts.join(' e ')}?`;
+      setMissingFieldsMessage(message);
+      setShowMissingFieldsWarning(true);
+      return;
+    }
+
+    await executeSubmit();
   };
 
   const handleDeleteConfirmed = async () => {
@@ -938,6 +965,15 @@ const Products: React.FC = () => {
           setDeleteId(null);
           setDeleteName(null);
         }}
+      />
+      <ConfirmDialog
+        isOpen={showMissingFieldsWarning}
+        title="Conferma creazione"
+        message={missingFieldsMessage}
+        confirmLabel="Crea comunque"
+        cancelLabel="Annulla"
+        onConfirm={executeSubmit}
+        onCancel={() => setShowMissingFieldsWarning(false)}
       />
     </PageContainer>
   );

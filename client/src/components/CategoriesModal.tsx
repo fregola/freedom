@@ -168,6 +168,9 @@ const CategoriesModal: React.FC<CategoriesModalProps> = ({ isOpen, onClose }) =>
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [language] = useState<'it' | 'en'>(
+    (typeof window !== 'undefined' && localStorage.getItem('menu-language') === 'en') ? 'en' : 'it'
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -233,7 +236,14 @@ const CategoriesModal: React.FC<CategoriesModalProps> = ({ isOpen, onClose }) =>
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
                 >
-                  <CategoryText>{category.name}</CategoryText>
+                  <CategoryText>
+                    <div>{language === 'en' ? (category.name_en || category.name) : category.name}</div>
+                    {(language === 'en' ? category.description_en : category.description) && (
+                      <div style={{ fontSize: '13px', color: '#888', marginTop: '2px', fontWeight: 'normal' }}>
+                        {language === 'en' ? category.description_en : category.description}
+                      </div>
+                    )}
+                  </CategoryText>
                   <CategoryArrow>›</CategoryArrow>
                 </CategoryItem>
               ))}

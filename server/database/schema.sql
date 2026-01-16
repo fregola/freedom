@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS categories (
 -- Tabella prodotti
 CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
     description TEXT,
     name_en VARCHAR(100),
     price DECIMAL(10,2),
@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS products (
     is_available BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+    UNIQUE(name, category_id)
 );
 
 -- Tabella informazioni attività (business)

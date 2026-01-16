@@ -64,6 +64,7 @@ interface Category {
   name: string;
   name_en?: string;
   description?: string;
+  description_en?: string;
   children?: Category[];
   parent_id?: number;
   sort_order?: number;
@@ -128,6 +129,13 @@ const CategoryTitle = styled.h1`
   font-weight: 700;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const CategoryDescription = styled.p`
+  color: #666;
+  font-size: 1rem;
+  margin: 4px 0 0 0;
+  font-weight: 400;
 `;
 
 const ProductsGrid = styled.div`
@@ -527,13 +535,30 @@ const CategoryProducts: React.FC = () => {
             <BackButton onClick={handleBack}>
               {language === 'en' ? '← Back to Menu' : '← Torna al Menu'}
             </BackButton>
-            <CategoryTitle>{language === 'en' ? (category?.name_en || category?.name) : (category?.name || 'Categoria')}</CategoryTitle>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <CategoryTitle>{language === 'en' ? (category?.name_en || category?.name) : (category?.name || 'Categoria')}</CategoryTitle>
+              {(language === 'en' ? category?.description_en : category?.description) && (
+                <CategoryDescription>
+                  {language === 'en' ? category?.description_en : category?.description}
+                </CategoryDescription>
+              )}
+            </div>
           </HeaderLeft>
         </Header>
 
         {/* Tags sottocategorie (filtri rapidi) */}
         {subcategories && subcategories.length > 0 && (
           <SubcategoryTags>
+            {activeSubcategoryId === null && (
+              <SubcategoryChip
+                $active={true}
+                onClick={() => setActiveSubcategoryId(null)}
+              >
+                {language === 'en' 
+                  ? `All ${category?.name_en || category?.name || ''}` 
+                  : `Tutti ${category?.name || ''}`}
+              </SubcategoryChip>
+            )}
             {subcategories.map((sub) => (
               <SubcategoryChip
                 key={sub.id}

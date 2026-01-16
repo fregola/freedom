@@ -305,7 +305,9 @@ const PublicMenu: React.FC = () => {
                   className="category-button"
                   onClick={() => handleCategoryClick(category)}
                 >
-                  {language === 'en' ? (category.name_en || category.name) : category.name}
+                  <span className="category-name">
+                    {language === 'en' ? (category.name_en || category.name) : category.name}
+                  </span>
                 </button>
               ))}
             </div>

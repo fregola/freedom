@@ -265,21 +265,25 @@ const getProductsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
     
-    // Query per ottenere solo prodotti disponibili di una categoria specifica (incluse sottocategorie)
+    // Query per ottenere solo prodotti disponibili di una categoria specifica (incluse sottocategorie ricorsivamente)
     const query = `
+      WITH RECURSIVE category_tree AS (
+        SELECT id FROM categories WHERE id = ?
+        UNION ALL
+        SELECT c.id FROM categories c
+        JOIN category_tree ct ON c.parent_id = ct.id
+      )
       SELECT 
         p.*,
         c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE (p.category_id = ? OR p.category_id IN (
-        SELECT id FROM categories WHERE parent_id = ?
-      ))
+      WHERE p.category_id IN (SELECT id FROM category_tree)
       AND p.is_available = 1
       ORDER BY p.name ASC
     `;
     
-    const products = await database.all(query, [categoryId, categoryId]);
+    const products = await database.all(query, [categoryId]);
     
     // Per ogni prodotto, ottieni allergeni e ingredienti associati
     const productsWithRelations = await Promise.all(
@@ -506,7 +510,7 @@ const createProduct = async (req, res) => {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({
         success: false,
-        message: 'Un prodotto con questo nome esiste già'
+        message: 'Un prodotto con questo nome esiste già nella stessa categoria'
       });
     }
     
@@ -667,7 +671,7 @@ const updateProduct = async (req, res) => {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({
         success: false,
-        message: 'Un prodotto con questo nome esiste già'
+        message: 'Un prodotto con questo nome esiste già nella stessa categoria'
       });
     }
     
