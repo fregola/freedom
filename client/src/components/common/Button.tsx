@@ -12,12 +12,12 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   title?: string;
   style?: React.CSSProperties;
+  as?: React.ElementType;
 }
 
 const StyledButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => !['variant', 'size', 'fullWidth', 'loading'].includes(prop),
-})<ButtonProps>`
-  display: inline-flex;
+  shouldForwardProp: (prop) => !['variant', 'size', 'fullWidth', 'loading', 'as'].includes(prop),
+})<ButtonProps>` display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
@@ -143,6 +143,7 @@ const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
   type = 'button',
+  as,
   ...props
 }) => {
   return (
@@ -154,6 +155,7 @@ const Button: React.FC<ButtonProps> = ({
       loading={loading}
       onClick={onClick}
       type={type}
+      as={as}
       {...props}
     >
       {children}

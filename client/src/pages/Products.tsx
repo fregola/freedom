@@ -312,34 +312,37 @@ const EnglishName = styled.div`
 
 
 
-const FileInput = styled.input.attrs({ type: 'file' })`
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  width: 100%;
+const HiddenFileInput = styled.input`
+  display: none;
+`;
 
-  &:focus {
-    outline: none;
+const ImageUploadArea = styled.div`
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s;
+  
+  &:hover {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 `;
 
 const ImagePreview = styled.div`
   margin-top: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
 `;
 
 const PreviewImage = styled.img`
-  width: 80px;
-  height: 60px;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: contain;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
 `;
 
 const RemoveImageButton = styled.button`
@@ -1006,25 +1009,32 @@ const Products: React.FC = () => {
 
             <FormGroup>
               <Label htmlFor="image">Immagine prodotto</Label>
-              <FileInput
+              <HiddenFileInput
                 id="image"
+                type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
               />
               
-              {(imagePreview || currentImagePath) && (
-                <ImagePreview>
+              {(imagePreview || currentImagePath) ? (
+                <div style={{ textAlign: 'center' }}>
                   <PreviewImage 
                     src={imagePreview || `${API_BASE_URL}${currentImagePath}`}
                     alt="Anteprima immagine" 
                   />
-                  <RemoveImageButton 
-                    type="button" 
-                    onClick={handleRemoveImage}
-                  >
-                    Rimuovi
-                  </RemoveImageButton>
-                </ImagePreview>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+                     <label htmlFor="image">
+                       <Button type="button" variant="secondary" as="span" style={{ cursor: 'pointer' }}>Cambia</Button>
+                     </label>
+                     <Button type="button" variant="danger" onClick={handleRemoveImage}>Rimuovi</Button>
+                  </div>
+                </div>
+              ) : (
+                <label htmlFor="image">
+                  <ImageUploadArea>
+                    <span style={{ fontSize: 13, color: '#6b7280' }}>Clicca per caricare una foto</span>
+                  </ImageUploadArea>
+                </label>
               )}
             </FormGroup>
 
