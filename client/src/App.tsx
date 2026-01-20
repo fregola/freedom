@@ -29,7 +29,9 @@ const App: React.FC = () => {
           <Route path="/" element={<PublicMenu />} />
           <Route path="/menu" element={<Navigate to="/" replace />} />
           <Route path="/menu/category/:id" element={<CategoryProducts />} />
+          <Route path="/menu/custom" element={<Navigate to="/" replace />} />
           <Route path="/menu/custom/:id" element={<PublicCustomMenu />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
           
           {/* Rotte protette della dashboard */}
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

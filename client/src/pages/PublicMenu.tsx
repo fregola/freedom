@@ -294,7 +294,7 @@ const PublicMenu: React.FC = () => {
                 <button
                   key={`custom-${visibleCustom.id}`}
                   className="category-button"
-                  onClick={() => navigate('/menu/custom')}
+                  onClick={() => navigate(`/menu/custom/${visibleCustom.id}`)}
                 >
                   {visibleCustom.name}
                 </button>

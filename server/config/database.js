@@ -88,12 +88,33 @@ class Database {
     }
 
     /**
+     * Esegue le migrazioni del database per aggiornare lo schema esistente
+     */
+    async runMigrations() {
+        try {
+            console.log('Verifica migrazioni database...');
+            
+            // Migrazione: aggiunta qr_destination a business_info
+            await this.ensureColumn('business_info', 'qr_destination', 'TEXT');
+            
+            // Migrazione: aggiunta description_en a products (per sicurezza)
+            await this.ensureColumn('products', 'description_en', 'TEXT');
+            
+            console.log('Migrazioni completate');
+        } catch (error) {
+            console.error('Errore durante le migrazioni:', error);
+            // Non blocchiamo l'avvio, ma logghiamo l'errore
+        }
+    }
+
+    /**
      * Inizializza completamente il database
      */
     async initialize() {
         try {
             await this.connect();
             await this.runSchema();
+            await this.runMigrations();
             await this.runSeeds();
             console.log('Database inizializzato completamente');
         } catch (error) {

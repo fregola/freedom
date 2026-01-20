@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { customMenuService, productService } from '../services/api';
 import SharedFooter from '../components/SharedFooter';
@@ -10,7 +10,16 @@ type VisibleMenu = {
   id: number;
   name: string;
   price?: number | null;
-  items: { product: { id: number; name: string; image_path?: string } }[];
+  items: { 
+    product: { 
+      id: number; 
+      name: string; 
+      image_path?: string;
+      price?: number;
+      description?: string;
+      description_en?: string;
+    } 
+  }[];
 };
 
 const PageContainer = styled.div`
@@ -178,6 +187,7 @@ const EmptyState = styled.div`
 
 const PublicCustomMenu: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   
   const [menu, setMenu] = useState<VisibleMenu | null>(null);
   const [loading, setLoading] = useState(true);
@@ -186,22 +196,34 @@ const PublicCustomMenu: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         
-        const res: any = await customMenuService.getAll();
-        const list = res?.data?.menus || [];
-        const visible = list.find((m: any) => m.is_visible);
-        if (!visible) {
-          setMenu(null);
-        } else {
+        const res: any = await customMenuService.getById(parseInt(id));
+        if (res?.success && res?.data?.menu) {
+          const m = res.data.menu;
           const mapped: VisibleMenu = {
-            id: visible.id,
-            name: visible.name,
-            price: typeof visible.price === 'number' ? visible.price : (visible.price ? Number(visible.price) : null),
-            items: Array.isArray(visible.items) ? visible.items.map((it: any) => ({ product: { id: it.product_id, name: it.name, image_path: it.image_path } })) : [],
+            id: m.id,
+            name: m.name,
+            price: typeof m.price === 'number' ? m.price : (m.price ? Number(m.price) : null),
+            items: Array.isArray(m.items) ? m.items.map((it: any) => ({ 
+              product: { 
+                id: it.product_id, 
+                name: it.name, 
+                image_path: it.image_path,
+                price: it.price,
+                description: it.description,
+                description_en: it.description_en
+              } 
+            })) : [],
           };
           setMenu(mapped);
+        } else {
+          setError('Menu non trovato');
         }
       } catch (e) {
         setError('Errore nel caricamento del menu');
@@ -210,7 +232,7 @@ const PublicCustomMenu: React.FC = () => {
       }
     };
     load();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -242,8 +264,9 @@ const PublicCustomMenu: React.FC = () => {
   }
 
   if (!menu) {
-    navigate('/menu');
-    return null;
+    // Se non c'è menu, non c'è loading e non c'è errore, torniamo alla home o al menu
+    // Usiamo Navigate invece di navigate() nel render per evitare warning
+    return <Navigate to="/menu" replace />;
   }
 
   return (

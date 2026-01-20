@@ -16,7 +16,7 @@ const listMenus = async (req, res) => {
     const result = [];
     for (const m of menus) {
       const items = await database.all(`
-        SELECT cmi.id, cmi.position, p.id as product_id, p.name, p.image_path, p.category_id
+        SELECT cmi.id, cmi.position, p.id as product_id, p.name, p.image_path, p.category_id, p.price, p.description, p.description_en
         , (SELECT name FROM categories WHERE id = p.category_id) as category_name
         FROM custom_menu_items cmi
         JOIN products p ON p.id = cmi.product_id
@@ -38,7 +38,7 @@ const getMenuById = async (req, res) => {
     const menu = await database.get('SELECT * FROM custom_menus WHERE id = ?', [id]);
     if (!menu) return res.status(404).json({ success: false, message: 'Menu non trovato' });
     const items = await database.all(`
-      SELECT cmi.id, cmi.position, p.id as product_id, p.name, p.image_path, p.category_id,
+      SELECT cmi.id, cmi.position, p.id as product_id, p.name, p.image_path, p.category_id, p.price, p.description, p.description_en,
       (SELECT name FROM categories WHERE id = p.category_id) as category_name
       FROM custom_menu_items cmi
       JOIN products p ON p.id = cmi.product_id
