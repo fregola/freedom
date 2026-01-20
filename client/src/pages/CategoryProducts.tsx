@@ -569,9 +569,7 @@ const CategoryProducts: React.FC = () => {
                 $active={true}
                 onClick={() => setActiveSubcategoryId(null)}
               >
-                {language === 'en' 
-                  ? `All ${category?.name_en || category?.name || ''}` 
-                  : `Tutti ${category?.name || ''}`}
+                {language === 'en' ? 'All' : 'Tutti'}
               </SubcategoryChip>
             )}
             {subcategories.map((sub) => (

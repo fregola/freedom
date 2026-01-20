@@ -957,7 +957,14 @@ const Products: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                 >
                     <option value="">Seleziona categoria</option>
-                    {categories.map(category => (
+                    {categories
+                      .slice()
+                      .sort((a, b) => {
+                        const nameA = a.parent_name ? `${a.parent_name} -- ${a.name}` : a.name;
+                        const nameB = b.parent_name ? `${b.parent_name} -- ${b.name}` : b.name;
+                        return nameA.localeCompare(nameB, 'it', { sensitivity: 'base' });
+                      })
+                      .map(category => (
                       <option key={category.id} value={category.id}>
                       {category.parent_name ? `${category.parent_name} -- ${category.name}` : category.name}
                     </option>
