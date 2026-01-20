@@ -8,7 +8,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   type?: 'button' | 'submit' | 'reset';
   title?: string;
   style?: React.CSSProperties;

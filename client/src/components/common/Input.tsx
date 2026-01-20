@@ -17,6 +17,8 @@ interface InputProps {
   step?: number;
   min?: number;
   max?: number;
+  style?: React.CSSProperties;
+  autoFocus?: boolean;
 }
 
 const InputContainer = styled.div.withConfig({

@@ -16,7 +16,7 @@ type Category = { id: number; name: string };
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (product: Product) => void;
+  onSelect: (product: Product | Product[]) => void;
   editProductId?: number;
 }
 
@@ -129,7 +129,7 @@ const List = styled.div`
   gap: 8px;
 `;
 
-const Item = styled.button`
+const Item = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -183,9 +183,13 @@ const SelectProductModal: React.FC<Props> = ({ isOpen, onClose, onSelect, editPr
   const [ingredientQuery, setIngredientQuery] = useState('');
   const [allergenQuery, setAllergenQuery] = useState('');
   const [initializedEdit, setInitializedEdit] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setSelectedProductIds([]);
+      return;
+    }
     if (editProductId) {
       setActiveTab('create');
     }
@@ -284,6 +288,18 @@ const SelectProductModal: React.FC<Props> = ({ isOpen, onClose, onSelect, editPr
     }
   };
 
+  const toggleProductSelection = (id: number) => {
+    setSelectedProductIds((prev: number[]) => 
+      prev.includes(id) ? prev.filter((pId: number) => pId !== id) : [...prev, id]
+    );
+  };
+
+  const handleMultiSelectSubmit = () => {
+    const selectedProducts = products.filter(p => selectedProductIds.includes(p.id));
+    onSelect(selectedProducts);
+    setSelectedProductIds([]);
+  };
+
   return (
     <ModalOverlay isOpen={isOpen}>
       <Modal>
@@ -303,22 +319,55 @@ const SelectProductModal: React.FC<Props> = ({ isOpen, onClose, onSelect, editPr
           {activeTab === 'select' && (
             <Column>
               <>
-                <SubTitle>Prodotti esistenti</SubTitle>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <SubTitle style={{marginBottom: 0}}>Prodotti esistenti</SubTitle>
+                    {selectedProductIds.length > 0 && (
+                        <Button size="small" onClick={handleMultiSelectSubmit}>
+                            Aggiungi ({selectedProductIds.length})
+                        </Button>
+                    )}
+                </div>
                 <Input placeholder="Cerca per nome o categoria" value={query} onChange={(e) => setQuery(e.target.value)} fullWidth />
                 <div style={{ height: 8 }} />
                 {loading ? (
                   <Muted>Caricamento...</Muted>
                 ) : (
                   <List>
-                    {filtered.map((p) => (
-                      <Item key={p.id} onClick={() => onSelect(p)}>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{p.name}</div>
-                          {p.category_name && <Muted>{p.category_name}</Muted>}
+                    {filtered.map((p) => {
+                      const isSelected = selectedProductIds.includes(p.id);
+                      return (
+                      <Item 
+                        key={p.id} 
+                        onClick={() => toggleProductSelection(p.id)}
+                        style={{ 
+                            borderColor: isSelected ? '#3b82f6' : '#e5e7eb',
+                            backgroundColor: isSelected ? '#eff6ff' : '#fff'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            readOnly
+                            style={{ pointerEvents: 'none' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{p.name}</div>
+                            {p.category_name && <Muted>{p.category_name}</Muted>}
+                          </div>
                         </div>
-                        <div />
+                        <Button 
+                            size="small" 
+                            variant="secondary"
+                            onClick={(e) => {
+                                e?.stopPropagation();
+                                onSelect(p);
+                            }}
+                        >
+                            +
+                        </Button>
                       </Item>
-                    ))}
+                    )})}
                     {filtered.length === 0 && <Muted>Nessun prodotto trovato</Muted>}
                   </List>
                 )}
