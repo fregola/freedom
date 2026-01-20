@@ -279,7 +279,8 @@ const ItemsList = styled.div`
 const SubcategoryChip = styled.button<{ $active?: boolean }>`
   background: rgba(204, 157, 109, 0.12);
   color: #b8906b;
-  padding: 8px 16px;
+  padding: 0 16px;
+  height: 38px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -288,6 +289,9 @@ const SubcategoryChip = styled.button<{ $active?: boolean }>`
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background: rgba(204, 157, 109, 0.2);

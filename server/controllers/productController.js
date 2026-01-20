@@ -390,7 +390,7 @@ const createProduct = async (req, res) => {
     // Validazione input
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Validazione fallita (updateProduct):', JSON.stringify(errors.array(), null, 2));
+      console.log('❌ Validazione fallita (createProduct):', JSON.stringify(errors.array(), null, 2));
       return res.status(400).json({
         success: false,
         message: 'Dati non validi',

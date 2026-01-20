@@ -153,6 +153,10 @@
   color: #333;
   letter-spacing: 1px;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .category-description {

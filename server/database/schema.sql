@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS business_info (
     google_business VARCHAR(255),
     whatsapp VARCHAR(50),
     logo_path VARCHAR(255),
+    qr_destination TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
