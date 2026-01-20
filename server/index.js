@@ -212,7 +212,7 @@ if (fs.existsSync(CLIENT_BUILD_DIR)) {
                     if (contactStr) {
                         metaDesc = metaDesc ? `${metaDesc} | ${contactStr}` : contactStr;
                     }
-                    if (!metaDesc) metaDesc = 'Web site created using create-react-app';
+                    if (!metaDesc) metaDesc = 'Scegli, Prenota, Gusta';
 
                     // Sanitize
                     const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
