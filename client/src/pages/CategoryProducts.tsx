@@ -286,6 +286,8 @@ const SubcategoryChip = styled.button<{ $active?: boolean }>`
   border: 1px solid rgba(204, 157, 109, 0.4);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover {
     background: rgba(204, 157, 109, 0.2);
