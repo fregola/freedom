@@ -184,10 +184,80 @@ app.get('/api/health', (req, res) => {
 
 const CLIENT_BUILD_DIR = path.join(__dirname, '../client/build');
 if (fs.existsSync(CLIENT_BUILD_DIR)) {
-    app.use(express.static(CLIENT_BUILD_DIR));
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(CLIENT_BUILD_DIR, 'index.html'));
+    // Serve static files but disable automatic index.html serving
+    app.use(express.static(CLIENT_BUILD_DIR, { index: false }));
+
+    // Handler for serving index.html with dynamic meta tags
+    const serveIndex = async (req, res) => {
+        try {
+            const indexPath = path.join(CLIENT_BUILD_DIR, 'index.html');
+            let htmlData = await fs.promises.readFile(indexPath, 'utf8');
+
+            try {
+                // Fetch business info for meta tags
+                const businessInfo = await database.get('SELECT * FROM business_info WHERE id = 1');
+                if (businessInfo) {
+                    const { name, description, address, city, phone } = businessInfo;
+
+                    const title = name || 'PubFreedom';
+                    let metaDesc = description || '';
+
+                    // Build contact info string
+                    const parts = [];
+                    if (address) parts.push(address);
+                    if (city) parts.push(city);
+                    if (phone) parts.push(`Tel: ${phone}`);
+
+                    const contactStr = parts.join(' - ');
+                    if (contactStr) {
+                        metaDesc = metaDesc ? `${metaDesc} | ${contactStr}` : contactStr;
+                    }
+                    if (!metaDesc) metaDesc = 'Web site created using create-react-app';
+
+                    // Sanitize
+                    const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const safeDesc = metaDesc.replace(/"/g, '&quot;');
+
+                    // Replace Title
+                    htmlData = htmlData.replace(/<title>.*?<\/title>/, `<title>${safeTitle}</title>`);
+
+                    // Replace Description
+                    htmlData = htmlData.replace(
+                        /<meta\s+name="description"\s+content=".*?"\s*\/?>/i,
+                        `<meta name="description" content="${safeDesc}" />`
+                    );
+
+                    // Add Open Graph tags
+                    const ogTags = `
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="${safeTitle}" />`;
+
+                    htmlData = htmlData.replace('</head>', `${ogTags}\n  </head>`);
+                }
+            } catch (dbErr) {
+                console.error('Error injecting meta tags:', dbErr);
+                // Continue with original HTML if DB fails
+            }
+
+            res.send(htmlData);
+        } catch (err) {
+            console.error('Error reading index.html:', err);
+            res.status(500).send('Server Error');
+        }
+    };
+
+    app.get('/', serveIndex);
+
+    // Handle SPA routing (for non-API routes)
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api') || req.path.includes('.')) {
+            return next();
+        }
+        serveIndex(req, res);
     });
+
 } else {
     app.get('/', (req, res) => {
         res.status(200).send('API server');
